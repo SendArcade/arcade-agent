@@ -1,7 +1,6 @@
-import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction, TransactionInstruction, VersionedTransaction } from "@solana/web3.js";
+import { sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
 import { SolanaAgentKit } from "../agent";
-import bs58 from "bs58";
-import { ag } from "@raydium-io/raydium-sdk-v2/lib/api-0eb57ba2";
+
 
 export async function rps(
     agent: SolanaAgentKit,
