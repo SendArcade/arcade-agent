@@ -20,3 +20,4 @@ export * from "./create_orca_single_sided_whirlpool";export * from "./raydium_cr
 export * from "./raydium_create_clmm";
 export * from "./raydium_create_cpmm";
 export * from "./openbook_create_market";
+export * from "./rps";

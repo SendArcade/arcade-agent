@@ -980,6 +980,31 @@ export class SolanaOpenbookCreateMarket extends Tool {
   }
 }
 
+export class RPS extends Tool {
+  name = "rps_blink";
+  description = "Plays the rock-paper-scissors game blink.";
+
+  constructor(private solanaKit: SolanaAgentKit) {
+    super();
+  }
+
+  protected async _call(wantToPlay: boolean): Promise<string> {
+    try {
+      const result = await this.solanaKit.rps(wantToPlay);
+      return JSON.stringify({
+        status: "success",
+        result,
+      });
+    } catch (error: any) {
+      return JSON.stringify({
+        status: "error",
+        message: error.message,
+        code: error.code || "UNKNOWN_ERROR",
+      });
+    }
+  }
+}
+
 export function createSolanaTools(solanaKit: SolanaAgentKit) {
   return [
     new SolanaBalanceTool(solanaKit),
@@ -1007,5 +1032,6 @@ export function createSolanaTools(solanaKit: SolanaAgentKit) {
     new SolanaRaydiumCreateCpmm(solanaKit),
     new SolanaOpenbookCreateMarket(solanaKit),
     new SolanaCreateSingleSidedWhirlpoolTool(solanaKit),
+    new RPS(solanaKit),
   ];
 }

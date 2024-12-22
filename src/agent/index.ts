@@ -270,4 +270,8 @@ export class SolanaAgentKit {
       tickSize,
     )
   }
+
+  async rps(wantToPlay: boolean): Promise<string> {
+    return `Processed input: ${wantToPlay}`;
+  }
 }
