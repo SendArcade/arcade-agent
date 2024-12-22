@@ -1,8 +1,7 @@
 import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction, TransactionInstruction, VersionedTransaction } from "@solana/web3.js";
 import { SolanaAgentKit } from "../agent";
 import bs58 from "bs58";
-import dotenv from "dotenv";
-dotenv.config();
+import { ag } from "@raydium-io/raydium-sdk-v2/lib/api-0eb57ba2";
 
 export async function rps(
     agent: SolanaAgentKit,
@@ -10,9 +9,6 @@ export async function rps(
     choice: "rock" | "paper" | "scissors",
 ) {
     try {
-        const connection = new Connection(clusterApiUrl("mainnet-beta"));
-        const KEYPAIR = agent.wallet;
-        const ADDRESS = KEYPAIR.publicKey;
         const res = await fetch(
             `https://rps.sendarcade.fun/api/actions/backend?amount=${amount}&choice=${choice}`,
             {
@@ -21,7 +17,7 @@ export async function rps(
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    account: ADDRESS.toBase58(),
+                    account: agent.wallet.publicKey.toBase58(),
                 }),
             },
         );
@@ -31,18 +27,18 @@ export async function rps(
         if (data.transaction) {
             console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
-            txn.sign(KEYPAIR);
+            txn.sign(agent.wallet);
             txn.recentBlockhash = (
-                await connection.getLatestBlockhash()
+                await agent.connection.getLatestBlockhash()
             ).blockhash;
             const sig = await sendAndConfirmTransaction(
-                connection,
+                agent.connection,
                 txn,
-                [KEYPAIR],
+                [agent.wallet],
                 { commitment: 'confirmed', skipPreflight: true }
             );
             let href = data.links?.next?.href;
-            return outcome(agent,sig,href);
+            return outcome(agent, sig, href);
         } else {
             return "failed";
         }
@@ -51,10 +47,8 @@ export async function rps(
         throw new Error(`RPS game failed: ${error.message}`);
     }
 }
-async function outcome(agent: SolanaAgentKit, sig: string, href:string): Promise<string> {
+async function outcome(agent: SolanaAgentKit, sig: string, href: string): Promise<string> {
     try {
-        const KEYPAIR = agent.wallet;
-        const ADDRESS = KEYPAIR.publicKey;
         const res = await fetch(
             `https://rps.sendarcade.fun${href}`,
             {
@@ -63,29 +57,26 @@ async function outcome(agent: SolanaAgentKit, sig: string, href:string): Promise
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    account: ADDRESS.toBase58(),
+                    account: agent.wallet.publicKey.toBase58(),
                     signature: sig,
                 }),
             },
         );
 
-        const data:any = await res.json();
+        const data: any = await res.json();
         const title = data.title;
-        if (title.startsWith("You lost")){
+        if (title.startsWith("You lost")) {
             return title;
         }
         let next_href = data.links?.actions?.[0]?.href;
-        return title + "\n" + won(next_href)
+        return title + "\n" + won(agent, next_href)
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);
     }
 }
-async function won(href:string): Promise<string> {
+async function won(agent: SolanaAgentKit, href: string): Promise<string> {
     try {
-        const connection = new Connection(clusterApiUrl("mainnet-beta"));
-        const KEYPAIR = Keypair.fromSecretKey(bs58.decode(process.env.SOLANA_SENDER_SECRET!));;
-        const ADDRESS = KEYPAIR.publicKey;
         const res = await fetch(
             `https://rps.sendarcade.fun${href}`,
             {
@@ -94,22 +85,22 @@ async function won(href:string): Promise<string> {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    account: ADDRESS.toBase58(),
+                    account: agent.wallet.publicKey.toBase58(),
                 }),
             },
         );
 
-        const data:any = await res.json();
+        const data: any = await res.json();
         if (data.transaction) {
             console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
             txn.recentBlockhash = (
-                await connection.getLatestBlockhash()
+                await agent.connection.getLatestBlockhash()
             ).blockhash;
             const sig = await sendAndConfirmTransaction(
-                connection,
+                agent.connection,
                 txn,
-                [KEYPAIR],
+                [agent.wallet],
                 { commitment: 'confirmed', skipPreflight: true }
             );
         }
@@ -117,16 +108,14 @@ async function won(href:string): Promise<string> {
             return "Failed to claim prize.";
         }
         let next_href = data.links?.next?.href;
-        return postWin(next_href);
+        return postWin(agent, next_href);
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);
     }
 }
-async function postWin(href:string): Promise<string> {
+async function postWin(agent: SolanaAgentKit, href: string): Promise<string> {
     try {
-        const KEYPAIR = Keypair.fromSecretKey(bs58.decode(process.env.SOLANA_SENDER_SECRET!));;
-        const ADDRESS = KEYPAIR.publicKey;
         const res = await fetch(
             `https://rps.sendarcade.fun${href}`,
             {
@@ -135,14 +124,14 @@ async function postWin(href:string): Promise<string> {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    account: ADDRESS.toBase58(),
+                    account: agent.wallet.publicKey.toBase58(),
                 }),
             },
         );
 
-        const data:any = await res.json();
+        const data: any = await res.json();
         const title = data.title;
-        return "Prize claimed Successfully"+"\n"+title;
+        return "Prize claimed Successfully" + "\n" + title;
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);
