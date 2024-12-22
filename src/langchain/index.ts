@@ -983,7 +983,7 @@ export class SolanaOpenbookCreateMarket extends Tool {
 export class SolanaRockPaperScissorsTool extends Tool {
   name = "rock_paper_scissors_blink";
   description = `Gamble while playing rock paper scissors.
-  Inputs:
+  Inputs(input is a json string):
   choice: string, either "rock", "paper", or "scissors" (required)
   amount: number, amount of SOL to play the game with, either 0.1, 0.01, or 0.005 SOL (required)`;
 
@@ -992,8 +992,8 @@ export class SolanaRockPaperScissorsTool extends Tool {
   }
 
   private validateInput(input: any): void {
-    if (!input.name || typeof input.choice !== "string") {
-      throw new Error("choice is required and must be a string");
+    if (input.choice !== undefined) {
+      throw new Error('choice is required.');
     }
     if (
       input.amount !== undefined &&
@@ -1009,8 +1009,8 @@ export class SolanaRockPaperScissorsTool extends Tool {
       this.validateInput(parsedInput);
 
       const tx = await this.solanaKit.rockPaperScissors(
-        parsedInput.choice,
-        parsedInput.amount,
+        Number(parsedInput.amount),
+        parsedInput.choice as "rock" | "paper" | "scissors",
       );
 
       return JSON.stringify({
