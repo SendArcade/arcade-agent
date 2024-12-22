@@ -25,7 +25,8 @@ import {
   stakeWithJup,
   sendCompressedAirdrop,
   createOrcaSingleSidedWhirlpool,
-  FEE_TIERS
+  FEE_TIERS,
+  rps,
 } from "../tools";
 import { CollectionOptions, PumpFunTokenOptions } from "../types";
 import { BN } from "@coral-xyz/anchor";
@@ -271,7 +272,7 @@ export class SolanaAgentKit {
     )
   }
 
-  async rps(wantToPlay: boolean): Promise<string> {
-    return `Processed input: ${wantToPlay}`;
+  async rockPaperScissors(amount: number, choice: "rock" | "paper" | "scissors") {
+    return rps(this, amount, choice);
   }
 }

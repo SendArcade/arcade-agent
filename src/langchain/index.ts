@@ -980,20 +980,43 @@ export class SolanaOpenbookCreateMarket extends Tool {
   }
 }
 
-export class RPS extends Tool {
-  name = "rps_blink";
-  description = "Plays the rock-paper-scissors game blink.";
+export class SolanaRockPaperScissorsTool extends Tool {
+  name = "rock_paper_scissors_blink";
+  description = `Gamble while playing rock paper scissors.
+  Inputs:
+  choice: string, either "rock", "paper", or "scissors" (required)
+  amount: number, amount of SOL to play the game with, either 0.1, 0.01, or 0.005 SOL (required)`;
 
   constructor(private solanaKit: SolanaAgentKit) {
     super();
   }
 
-  protected async _call(wantToPlay: boolean): Promise<string> {
+  private validateInput(input: any): void {
+    if (!input.name || typeof input.choice !== "string") {
+      throw new Error("choice is required and must be a string");
+    }
+    if (
+      input.amount !== undefined &&
+      (typeof input.spaceKB !== "number" || input.spaceKB <= 0)
+    ) {
+      throw new Error("amount must be a positive number when provided");
+    }
+  }
+
+  protected async _call(input: string): Promise<string> {
     try {
-      const result = await this.solanaKit.rps(wantToPlay);
+      const parsedInput = toJSON(input);
+      this.validateInput(parsedInput);
+
+      const tx = await this.solanaKit.rockPaperScissors(
+        parsedInput.choice,
+        parsedInput.amount,
+      );
+
       return JSON.stringify({
         status: "success",
-        result,
+        message: "Game completed successfully",
+        transaction: tx,
       });
     } catch (error: any) {
       return JSON.stringify({
@@ -1032,6 +1055,6 @@ export function createSolanaTools(solanaKit: SolanaAgentKit) {
     new SolanaRaydiumCreateCpmm(solanaKit),
     new SolanaOpenbookCreateMarket(solanaKit),
     new SolanaCreateSingleSidedWhirlpoolTool(solanaKit),
-    new RPS(solanaKit),
+    new SolanaRockPaperScissorsTool(solanaKit),
   ];
 }
