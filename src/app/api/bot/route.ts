@@ -10,15 +10,58 @@ import * as fs from "fs";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { HumanMessage } from "@langchain/core/messages";
+import { getApps, initializeApp, getApp } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
+import { Keypair } from '@solana/web3.js';
 
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error('TELEGRAM_BOT_TOKEN environment variable not found.');
 const bot = new Bot(token);
 
+// Firebase
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+};
+
+// Initialize Firebase
+const app = !getApps.length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
+
+async function getOrCreateUserKeyPair(userId: string) {
+  const userDocRef = doc(db, 'users', userId);
+  const userDocSnap = await getDoc(userDocRef);
+
+  if (userDocSnap.exists()) {
+    // Return existing key pair
+    return userDocSnap.data();
+  }
+
+  // Generate a new key pair
+  const keypair = Keypair.generate();
+  const keypairData = {
+    publicKey: keypair.publicKey.toString(),
+    privateKey: String(bs58.encode(keypair.secretKey)),
+    inProgress: false,
+    inGame: false,
+  };
+
+  // Store in Firebase
+  await setDoc(userDocRef, keypairData);
+
+  return keypairData;
+}
+
 const WALLET_DATA_FILE = "wallet_data.txt";
 
-async function initializeAgent() {
+async function initializeAgent(userId:string, keyPair: any) {
   try {
     const llm = new ChatOpenAI({
       modelName: "gpt-4o-mini",
@@ -36,23 +79,23 @@ async function initializeAgent() {
     }
 
     const solanaKit = new SolanaAgentKit(
-      process.env.SOLANA_PRIVATE_KEY!,
+      keyPair.privateKey,
       process.env.RPC_URL,
       process.env.OPENAI_API_KEY!
     );
 
     const tools = createSolanaTools(solanaKit);
     const memory = new MemorySaver();
-    const config = { configurable: { thread_id: "Solana Agent Kit!" } };
+    const config = { configurable: { thread_id: userId } };
 
     const agent = createReactAgent({
       llm,
       tools,
       checkpointSaver: memory,
       messageModifier: `
-        You are a helpful agent that can interact onchain using the Solana Agent Kit. You are 
+        You are a helpful Send Arcade agent that can interact onchain using the Solana Agent Kit. You are 
         empowered to interact onchain using your tools. If you ever need funds, you can request them from the 
-        faucet. If not, you can provide your wallet details and request funds from the user. If there is a 5XX 
+        user at ${keyPair.publicKey}. If not, you can provide your wallet details and request funds from the user. If there is a 5XX 
         (internal) HTTP error code, ask the user to try again later. If someone asks you to do something you 
         can't do with your currently available tools, you must say so, and encourage them to implement it 
         themselves using the Solana Agent Kit, recommend they go to https://sendai.fun/kit for more information. Be 
@@ -74,17 +117,34 @@ async function initializeAgent() {
 
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
-  await ctx.reply("Hello! I am a Solana Agent Kit bot. I can help you interact with the Solana blockchain. Please provide your wallet details to get started.");
-  // const { agent, config } = await initializeAgent();
-  // const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
-  // for await (const chunk of stream) {
-  //   if ("agent" in chunk) {
-  //     await ctx.reply(String(chunk.agent.messages[0].content));
-  //     // console.log(chunk.agent.messages[0].content);
-  //   } else if ("tools" in chunk) {
-  //     await ctx.reply(String(chunk.tools.messages[0].content));
-  //   }
-  // }
+  const userId = ctx.from?.id.toString();
+    if (!userId) return;
+    const userDocRef = doc(db, 'users', userId);
+    const userDocSnap = await getDoc(userDocRef);
+  
+    if (!userDocSnap.exists()) {
+      // Get or create user key pair
+      const keyPair = await getOrCreateUserKeyPair(userId);
+      await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
+      await ctx.reply(`${String(keyPair.publicKey)}`);
+    }
+    // Get or create user key pair
+    const keyPair = await getOrCreateUserKeyPair(userId);
+    if (keyPair.inProgress) {
+      await new Promise(resolve => setTimeout(resolve, 11000));
+      await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+      return;
+    }
+  const { agent, config } = await initializeAgent(userId,keyPair);
+  const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
+  for await (const chunk of stream) {
+    if ("agent" in chunk) {
+      await ctx.reply(String(chunk.agent.messages[0].content));
+      // console.log(chunk.agent.messages[0].content);
+    } else if ("tools" in chunk) {
+      await ctx.reply(String(chunk.tools.messages[0].content));
+    }
+  }
 });
 
 
