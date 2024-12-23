@@ -8,7 +8,6 @@ import { ChatOpenAI } from "@langchain/openai";
 import * as fs from "fs";
 import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import * as readline from "readline";
 import { HumanMessage } from "@langchain/core/messages";
 
 

@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@langchain/langgraph':
+        specifier: ^0.2.34
+        version: 0.2.34(@langchain/core@0.3.26(openai@4.77.0(zod@3.24.1)))
+      '@langchain/openai':
+        specifier: ^0.3.16
+        version: 0.3.16(@langchain/core@0.3.26(openai@4.77.0(zod@3.24.1)))
       '@solana/actions':
         specifier: ^1.6.6
         version: 1.6.6(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -23,15 +29,24 @@ importers:
       firebase:
         specifier: ^11.1.0
         version: 11.1.0
+      fs:
+        specifier: 0.0.1-security
+        version: 0.0.1-security
       grammy:
         specifier: ^1.33.0
         version: 1.33.0
+      messages:
+        specifier: link:@langchain/core/messages
+        version: link:@langchain/core/messages
       next:
         specifier: 15.1.2
         version: 15.1.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       openai:
         specifier: ^4.77.0
         version: 4.77.0(zod@3.24.1)
+      prebuilt:
+        specifier: link:@langchain/langgraph/prebuilt
+        version: link:@langchain/langgraph/prebuilt
       react:
         specifier: ^19.0.0
         version: 19.0.0
@@ -1324,6 +1339,9 @@ packages:
   formdata-node@4.4.1:
     resolution: {integrity: sha512-0iirZp3uVDjVGt9p49aTaqjk84TrglENEDuqfdlZQ1roC9CWlPk6Avf8EEnZNcAqPonwkG35x4n3ww/1THYAeQ==}
     engines: {node: '>= 12.20'}
+
+  fs@0.0.1-security:
+    resolution: {integrity: sha512-3XY9e1pP0CVEUCdj5BmfIZxRBTSDycnbqhIOGec9QYtmVH2fbLpj86CFWkrNOkt/Fvty4KZG5lTglL9j/gJ87w==}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -3731,6 +3749,8 @@ snapshots:
     dependencies:
       node-domexception: 1.0.0
       web-streams-polyfill: 4.0.0-beta.3
+
+  fs@0.0.1-security: {}
 
   fsevents@2.3.3:
     optional: true

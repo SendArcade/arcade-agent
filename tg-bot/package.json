@@ -9,14 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/langgraph": "^0.2.34",
+    "@langchain/openai": "^0.3.16",
     "@solana/actions": "^1.6.6",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
     "firebase": "^11.1.0",
+    "fs": "0.0.1-security",
     "grammy": "^1.33.0",
+    "messages": "link:@langchain/core/messages",
     "next": "15.1.2",
     "openai": "^4.77.0",
+    "prebuilt": "link:@langchain/langgraph/prebuilt",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "solana-agent-kit": "^1.2.0"
