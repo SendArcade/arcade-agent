@@ -3,8 +3,8 @@ export const fetchCache = 'force-no-store';
 export const maxDuration = 300;
 
 import { Bot, webhookCallback } from 'grammy';
-import { SolanaAgentKit } from "../../../../../src";
-import { createSolanaTools } from "../../../../../src/langchain";
+import { SolanaAgentKit } from "../../../app/solana-agent-kit";
+import { createSolanaTools } from "../../../app/solana-agent-kit/langchain";
 import { ChatOpenAI } from "@langchain/openai";
 import * as fs from "fs";
 import { MemorySaver } from "@langchain/langgraph";
@@ -72,9 +72,9 @@ async function initializeAgent() {
   }
 }
 
-const { agent, config } = await initializeAgent();
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
+  const { agent, config } = await initializeAgent();
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   for await (const chunk of stream) {
     if ("agent" in chunk) {

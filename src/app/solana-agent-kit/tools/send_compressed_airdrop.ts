@@ -169,34 +169,31 @@ async function processAll(
         }),
       ];
 
-      const compressIxPromises = [];
       for (
         let i = 0;
         i < recipientBatch.length;
         i += maxRecipientsPerInstruction
       ) {
         const batch = recipientBatch.slice(i, i + maxRecipientsPerInstruction);
-        compressIxPromises.push(
-          CompressedTokenProgram.compress({
-            payer: payer.publicKey,
-            owner: payer.publicKey,
-            source: sourceTokenAccount.address,
-            toAddress: batch,
-            amount: batch.map(() => amount),
-            mint: mintAddress,
-          })
-        );
+        const compressIx = await CompressedTokenProgram.compress({
+          payer: payer.publicKey,
+          owner: payer.publicKey,
+          source: sourceTokenAccount.address,
+          toAddress: batch,
+          amount: batch.map(() => amount),
+          mint: mintAddress,
+        });
+        instructions.push(compressIx);
       }
-
-      const compressIxs = await Promise.all(compressIxPromises);
-      return [...instructions, ...compressIxs];
+      
+      return instructions;
     })
   );
 
   const url = agent.connection.rpcEndpoint;
   const rpc = createRpc(url, url, url);
 
-  const results = [];
+  const results: PromiseSettledResult<string>[] = [];
   let confirmedCount = 0;
   const totalBatches = instructionSets.length;
 
