@@ -10,10 +10,6 @@
     "start": "next start",
     "lint": "next lint"
   },
-  "engines": {
-    "node": "22.x",
-    "pnpm": ">=8.0.0"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
