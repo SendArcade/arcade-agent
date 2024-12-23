@@ -3,7 +3,8 @@ export const fetchCache = 'force-no-store';
 export const maxDuration = 300;
 
 import { Bot, webhookCallback } from 'grammy';
-import { SolanaAgentKit, createSolanaTools } from 'solana-agent-kit';
+import { SolanaAgentKit } from "../../../../../src";
+import { createSolanaTools } from "../../../../../src/langchain";
 import { ChatOpenAI } from "@langchain/openai";
 import * as fs from "fs";
 import { MemorySaver } from "@langchain/langgraph";
