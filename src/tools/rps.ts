@@ -1,7 +1,6 @@
 import { sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
 import { SolanaAgentKit } from "../agent";
 
-
 export async function rps(
     agent: SolanaAgentKit,
     amount: number,
@@ -9,7 +8,7 @@ export async function rps(
 ) {
     try {
         const res = await fetch(
-            `https://rps.sendarcade.fun/api/actions/backend?amount=${amount}&choice=${choice}`,
+            `https://rps.sendarcade.fun/api/actions/bot?amount=${amount}&choice=${choice}`,
             {
                 method: "POST",
                 headers: {
@@ -22,9 +21,7 @@ export async function rps(
         );
 
         const data = await res.json();
-        console.log(data);
         if (data.transaction) {
-            console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
             txn.sign(agent.wallet);
             txn.recentBlockhash = (
@@ -37,7 +34,7 @@ export async function rps(
                 { commitment: 'confirmed', skipPreflight: true }
             );
             let href = data.links?.next?.href;
-            return outcome(agent, sig, href);
+            return await outcome(agent, sig, href);
         } else {
             return "failed";
         }
@@ -68,7 +65,7 @@ async function outcome(agent: SolanaAgentKit, sig: string, href: string): Promis
             return title;
         }
         let next_href = data.links?.actions?.[0]?.href;
-        return title + "\n" + won(agent, next_href)
+        return title + "\n" + await won(agent, next_href)
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);
@@ -91,23 +88,14 @@ async function won(agent: SolanaAgentKit, href: string): Promise<string> {
 
         const data: any = await res.json();
         if (data.transaction) {
-            console.log(data.message);
             const txn = Transaction.from(Buffer.from(data.transaction, "base64"));
-            txn.recentBlockhash = (
-                await agent.connection.getLatestBlockhash()
-            ).blockhash;
-            const sig = await sendAndConfirmTransaction(
-                agent.connection,
-                txn,
-                [agent.wallet],
-                { commitment: 'confirmed', skipPreflight: true }
-            );
-        }
+            txn.partialSign(agent.wallet);
+            await agent.connection.sendRawTransaction(txn.serialize(),{ preflightCommitment: 'confirmed', skipPreflight: true });        }
         else {
             return "Failed to claim prize.";
         }
         let next_href = data.links?.next?.href;
-        return postWin(agent, next_href);
+        return await postWin(agent, next_href);
     } catch (error: any) {
         console.error(error);
         throw new Error(`RPS outcome failed: ${error.message}`);

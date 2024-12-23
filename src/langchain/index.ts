@@ -983,7 +983,7 @@ export class SolanaOpenbookCreateMarket extends Tool {
 export class SolanaRockPaperScissorsTool extends Tool {
   name = "rock_paper_scissors_blink";
   description = `Gamble while playing rock paper scissors.
-  Inputs(input is a json string):
+  Inputs(convert the input to a json string):
   choice: string, either "rock", "paper", or "scissors" (required)
   amount: number, amount of SOL to play the game with, either 0.1, 0.01, or 0.005 SOL (required)`;
 
@@ -1007,16 +1007,14 @@ export class SolanaRockPaperScissorsTool extends Tool {
     try {
       const parsedInput = toJSON(input);
       this.validateInput(parsedInput);
-
-      const tx = await this.solanaKit.rockPaperScissors(
-        Number(parsedInput.amount),
-        parsedInput.choice as "rock" | "paper" | "scissors",
+      const result = await this.solanaKit.rockPaperScissors(
+        Number(parsedInput['"amount"']),
+        parsedInput['"choice"'].replace(/^"|"$/g, '') as "rock" | "paper" | "scissors"
       );
-
+      
       return JSON.stringify({
         status: "success",
-        message: "Game completed successfully",
-        transaction: tx,
+        message: result,
       });
     } catch (error: any) {
       return JSON.stringify({
