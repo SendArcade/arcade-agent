@@ -120,6 +120,7 @@ ${chatHistory.join('\n')}
 
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
+  await ctx.reply(`Hello from agent kit.`);
   const userId = ctx.from?.id.toString();
   if (!userId) return;
   const userDocRef = doc(db, 'users', userId);
