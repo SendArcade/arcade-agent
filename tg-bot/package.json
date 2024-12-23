@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@solana/actions": "^1.6.6",
+    "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
     "firebase": "^11.1.0",
