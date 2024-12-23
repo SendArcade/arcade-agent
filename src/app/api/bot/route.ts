@@ -74,16 +74,17 @@ async function initializeAgent() {
 
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
-  const { agent, config } = await initializeAgent();
-  const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
-  for await (const chunk of stream) {
-    if ("agent" in chunk) {
-      await ctx.reply(String(chunk.agent.messages[0].content));
-      // console.log(chunk.agent.messages[0].content);
-    } else if ("tools" in chunk) {
-      await ctx.reply(String(chunk.tools.messages[0].content));
-    }
-  }
+  await ctx.reply("Hello! I am a Solana Agent Kit bot. I can help you interact with the Solana blockchain. Please provide your wallet details to get started.");
+  // const { agent, config } = await initializeAgent();
+  // const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
+  // for await (const chunk of stream) {
+  //   if ("agent" in chunk) {
+  //     await ctx.reply(String(chunk.agent.messages[0].content));
+  //     // console.log(chunk.agent.messages[0].content);
+  //   } else if ("tools" in chunk) {
+  //     await ctx.reply(String(chunk.tools.messages[0].content));
+  //   }
+  // }
 });
 
 
