@@ -131,6 +131,7 @@ bot.on('message:text', async (ctx) => {
     // Get or create user key pair
     const keyPair = await getOrCreateUserKeyPair(userId);
     if (keyPair.inProgress) {
+      await new Promise(resolve => setTimeout(resolve, 11000));
       await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
       return;
     }
