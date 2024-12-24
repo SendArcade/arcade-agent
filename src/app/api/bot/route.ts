@@ -147,6 +147,7 @@ bot.on('message:text', async (ctx) => {
         if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
       }
     }
+    await updateDoc(userDocRef, { inProgress: false });
   } catch (error: any) {
     if (error.message === 'Timeout') {
       await ctx.reply("I'm sorry, the operation took too long and timed out. Please try again.");
