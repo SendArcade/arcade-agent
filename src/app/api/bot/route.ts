@@ -117,8 +117,8 @@ async function initializeAgent(userId:string, keyPair: any) {
 
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
-  await ctx.reply("I'm sorry, I'm not able to process your request at the moment. Please try again later.");
-  return;
+  // await ctx.reply("I'm sorry, I'm not able to process your request at the moment. Please try again later.");
+  // return;
   const userId = ctx.from?.id.toString();
     if (!userId) return;
     const userDocRef = doc(db, 'users', userId);
