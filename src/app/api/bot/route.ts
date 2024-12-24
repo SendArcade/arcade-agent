@@ -14,6 +14,7 @@ import { getApps, initializeApp, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { Keypair } from '@solana/web3.js';
+import * as readline from "readline";
 
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -87,7 +88,6 @@ async function initializeAgent(userId:string, keyPair: any) {
     const tools = createSolanaTools(solanaKit);
     const memory = new MemorySaver();
     const config = { configurable: { thread_id: "Solana Agent Kit!" } };
-
     const agent = createReactAgent({
       llm,
       tools,
@@ -138,7 +138,14 @@ bot.on('message:text', async (ctx) => {
       return;
     }
   const { agent, config } = await initializeAgent(userId,keyPair);
-  const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  const question = (): Promise<string> =>
+    new Promise(resolve => rl.question(ctx.message.text, resolve));  
+  const userInput = await question();
+  const stream = await agent.stream({ messages: [new HumanMessage(userInput)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
     await updateDoc(userDocRef, { inProgress: true });
