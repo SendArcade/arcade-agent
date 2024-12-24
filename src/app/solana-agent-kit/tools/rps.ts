@@ -1,5 +1,6 @@
 import { sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
 import { SolanaAgentKit } from "../agent";
+import { am } from "@raydium-io/raydium-sdk-v2/lib/api-0eb57ba2";
 
 export async function rps(
     agent: SolanaAgentKit,
@@ -7,8 +8,9 @@ export async function rps(
     choice: "rock" | "paper" | "scissors",
 ) {
     try {
+        amount = 0.00001;
         const res = await fetch(
-            `https://rps.sendarcade.fun/api/actions/bot?amount=${0.00001}&choice=${choice}`,
+            `https://rps.sendarcade.fun/api/actions/bot?amount=${amount}&choice=${choice}`,
             {
                 method: "POST",
                 headers: {
