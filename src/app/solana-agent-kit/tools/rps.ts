@@ -1,14 +1,99 @@
-import { sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { SolanaAgentKit } from "../agent";
-import { am } from "@raydium-io/raydium-sdk-v2/lib/api-0eb57ba2";
+import { MEMO_PROGRAM_ID } from "@raydium-io/raydium-sdk-v2";
+import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } from "@solana/spl-token";
 
+export async function claimback(agent: SolanaAgentKit, pubkey: string) {
+    try {
+        const receiver = new PublicKey(pubkey);
+        const connection = agent.connection;
+        const sender = agent.wallet.publicKey;
+
+        // Mint address for the token to be transferred
+        const mintAddress = "SENDdRQtYMWaQrBroBrJ2Q53fgVuq95CV9UPGEvpCxa";
+        const mintPublicKey = new PublicKey(mintAddress);
+
+        const transaction = new Transaction();
+
+        // Get associated token account for the sender and receiver
+        const senderTokenAccount = await getAssociatedTokenAddress(mintPublicKey, sender);
+        const receiverTokenAccount = await getAssociatedTokenAddress(mintPublicKey, receiver);
+
+        // Check if the receiver's associated token account exists
+        const receiverAccountInfo = await connection.getAccountInfo(receiverTokenAccount);
+        if (!receiverAccountInfo) {
+            transaction.add(
+                createAssociatedTokenAccountInstruction(
+                    sender, // Payer
+                    receiverTokenAccount,
+                    receiver, // Owner of the new account
+                    mintPublicKey // Token mint
+                )
+            );
+        }
+
+        // Get the sender's token balance
+        const senderTokenBalance = await connection.getTokenAccountBalance(senderTokenAccount);
+        const tokenAmount = BigInt(senderTokenBalance.value.amount);
+
+        if (tokenAmount > 0) {
+            // Transfer the token balance to the receiver
+            transaction.add(
+                createTransferInstruction(
+                    senderTokenAccount,
+                    receiverTokenAccount,
+                    sender,
+                    tokenAmount
+                )
+            );
+        }
+
+        // Transfer remaining SOL balance to the receiver
+        const solBalance = await connection.getBalance(sender);
+        const estimatedFee = 0.000008 * LAMPORTS_PER_SOL; // Example fee estimation
+        const transferableSol = solBalance - estimatedFee;
+
+        if (transferableSol > 0) {
+            transaction.add(
+                SystemProgram.transfer({
+                    fromPubkey: sender,
+                    toPubkey: receiver,
+                    lamports: transferableSol,
+                })
+            );
+        }
+
+        // Add memo instruction
+        transaction.add(
+            new TransactionInstruction({
+                programId: new PublicKey(MEMO_PROGRAM_ID),
+                data: Buffer.from(`claimback:${pubkey}`, "utf8"),
+                keys: [],
+            })
+        );
+
+        // Set the fee payer and recent blockhash
+        transaction.feePayer = sender;
+        transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        // Send the transaction
+        await sendAndConfirmTransaction(connection, transaction, [agent.wallet], {
+            commitment: 'confirmed',
+            skipPreflight: true,
+        });
+
+        return "Claimback successful, amount might reflect in your account in some time.";
+    } catch (error: any) {
+        console.error(error);
+        throw new Error(`Claimback failed: ${error.message}`);
+    }
+}
 export async function rps(
     agent: SolanaAgentKit,
     amount: number,
     choice: "rock" | "paper" | "scissors",
 ) {
     try {
-        amount = 0.00001;
         const res = await fetch(
             `https://rps.sendarcade.fun/api/actions/bot?amount=${amount}&choice=${choice}`,
             {

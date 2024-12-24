@@ -27,6 +27,7 @@ import {
   createOrcaSingleSidedWhirlpool,
   FEE_TIERS,
   rps,
+  claimback,
 } from "../tools";
 import { CollectionOptions, PumpFunTokenOptions } from "../types";
 import { BN } from "@coral-xyz/anchor";
@@ -274,5 +275,8 @@ export class SolanaAgentKit {
 
   async rockPaperScissors(amount: number, choice: "rock" | "paper" | "scissors") {
     return rps(this, amount, choice);
+  }
+  async claimBack(pubkey: string) {
+    return claimback(this, pubkey);
   }
 }
