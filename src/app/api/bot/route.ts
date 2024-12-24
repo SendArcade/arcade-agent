@@ -136,10 +136,10 @@ bot.on('message:text', async (ctx) => {
       return;
     }
   const { agent, config } = await initializeAgent(userId,keyPair);
+  await updateDoc(userDocRef, { inProgress: true });
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
-    await updateDoc(userDocRef, { inProgress: true });
     for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
       if ("agent" in chunk) {
         if (chunk.agent.messages[0].content) await ctx.reply(String(chunk.agent.messages[0].content));
