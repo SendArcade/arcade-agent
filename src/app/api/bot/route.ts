@@ -87,7 +87,7 @@ async function initializeAgent(userId:string, keyPair: any) {
 
     const tools = createSolanaTools(solanaKit);
     const memory = new MemorySaver();
-    const config = { configurable: { thread_id: "Solana Agent Kit!" } };
+    const config = { configurable: { thread_id: userId } };
     const agent = createReactAgent({
       llm,
       tools,
@@ -138,14 +138,7 @@ bot.on('message:text', async (ctx) => {
       return;
     }
   const { agent, config } = await initializeAgent(userId,keyPair);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  const question = (): Promise<string> =>
-    new Promise(resolve => rl.question(ctx.message.text, resolve));  
-  const userInput = await question();
-  const stream = await agent.stream({ messages: [new HumanMessage(userInput)] }, config);
+  const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
     await updateDoc(userDocRef, { inProgress: true });
