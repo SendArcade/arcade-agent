@@ -29,7 +29,7 @@ export class SolanaBalanceTool extends Tool {
 
       return balance ? balance.toString() : "Not found.";
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -63,7 +63,7 @@ export class SolanaTransferTool extends Tool {
       );
       return "Transfer completed successfully of " + parsedInput.amount + " to " + parsedInput.to + " with tx " + tx;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -96,7 +96,7 @@ export class SolanaDeployTokenTool extends Tool {
       );
       return "Token deployed successfully with mint address " + result.mint+ " and decimals " + (parsedInput.decimals || 9);
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -121,7 +121,7 @@ export class SolanaDeployCollectionTool extends Tool {
       const result = await this.solanaKit.deployCollection(parsedInput);
       return "Collection deployed successfully with mint address " + result.collectionAddress+ " and name " + parsedInput.name;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -156,7 +156,7 @@ export class SolanaMintNFTTool extends Tool {
       );
       return "NFT minted successfully with mint address " + result.mint.toString()+ " and name " + parsedInput.name+ " and symbol " + parsedInput.symbol+ " and uri " + parsedInput.uri+ " and recipient " + parsedInput.recipient;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -189,7 +189,7 @@ export class SolanaTradeTool extends Tool {
       );
       return "Trade executed successfully with tx " + tx+ " and inputAmount " + parsedInput.inputAmount+ " and inputToken " + parsedInput.inputMint+ " and outputToken " + parsedInput.outputMint;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -207,7 +207,7 @@ export class SolanaRequestFundsTool extends Tool {
       await this.solanaKit.requestFaucetFunds();
       return "Funds requested successfully"+ " and network is " + this.solanaKit.connection.rpcEndpoint.split("/")[2];
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -248,7 +248,7 @@ export class SolanaRegisterDomainTool extends Tool {
       );
       return "Domain registered successfully with tx " + tx+ " and domain " + parsedInput.name+ " and spaceKB " + parsedInput.spaceKB;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -271,7 +271,7 @@ export class SolanaResolveDomainTool extends Tool {
       const publicKey = await this.solanaKit.resolveSolDomain(domain);
       return "Domain resolved successfully with publicKey " + publicKey.toBase58();
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -294,7 +294,7 @@ export class SolanaGetDomainTool extends Tool {
       const domain = await this.solanaKit.getPrimaryDomain(account);
       return "Primary domain retrieved successfully with domain " + domain;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -374,7 +374,7 @@ export class SolanaPumpfunTokenLaunchTool extends Tool {
       );
       return "Token launched successfully on Pump.fun and tokenName " + parsedInput.tokenName+ " and tokenTicker " + parsedInput.tokenTicker;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -400,7 +400,7 @@ export class SolanaCreateImageTool extends Tool {
       const result = await create_image(this.solanaKit, input.trim());
       return "Image created successfully with prompt."+ " and result " + result.images[0].toString();
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -423,7 +423,7 @@ export class SolanaLendAssetTool extends Tool {
       const tx = await this.solanaKit.lendAssets(amount);
       return "Asset lent successfully with tx " + tx+ " and amount " + amount;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -464,7 +464,7 @@ export class SolanaStakeTool extends Tool {
       const tx = await this.solanaKit.stake(parsedInput.amount);
       return "Staked successfully with tx " + tx+ " and amount " + parsedInput.amount;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -488,7 +488,7 @@ export class SolanaFetchPriceTool extends Tool {
       const price = await fetchPrice(this.solanaKit, input.trim());
       return "Price fetched successfully with price " + price+ " and tokenId " + input.trim();
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -511,7 +511,7 @@ export class SolanaTokenDataTool extends Tool {
       const tokenData = await this.solanaKit.getTokenDataByAddress(parsedInput);
       return "Token data fetched successfully with tokenData " + tokenData+ " and mintAddress " + parsedInput;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -533,7 +533,7 @@ export class SolanaTokenDataByTickerTool extends Tool {
       const tokenData = await this.solanaKit.getTokenDataByTicker(ticker);
       return "Token data fetched successfully with tokenData " + tokenData+ " and ticker " + ticker;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -568,7 +568,7 @@ export class SolanaCompressedAirdropTool extends Tool {
       );
       return "Airdropped successfully with txs " + txs+ " and mintAddress " + parsedInput.mintAddress+ " and amount " + parsedInput.amount+ " and decimals " + parsedInput.decimals+ " and recipients " + parsedInput.recipients;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -613,7 +613,7 @@ export class SolanaCreateSingleSidedWhirlpoolTool extends Tool {
       );
       return "Single-sided Whirlpool created successfully with txId " + txId;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -646,7 +646,7 @@ export class SolanaRaydiumCreateAmmV4 extends Tool {
       );
       return "Create raydium amm v4 pool successfully with tx " + tx;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -682,7 +682,7 @@ export class SolanaRaydiumCreateClmm extends Tool {
       );
       return "Create raydium clmm pool successfully with tx " + tx;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -721,7 +721,7 @@ export class SolanaRaydiumCreateCpmm extends Tool {
       );
       return "Create raydium cpmm pool successfully with tx " + tx;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -754,7 +754,7 @@ export class SolanaOpenbookCreateMarket extends Tool {
       );
       return "Create openbook market successfully with tx " + tx;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }
@@ -792,7 +792,7 @@ export class SolanaRockPaperScissorsTool extends Tool {
       );
       return result;
     } catch (error: any) {
-      return String(error.message);
+      return "Sorry an error occurred. Please try again later.";
     }
   }
 }

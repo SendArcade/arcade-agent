@@ -11,7 +11,7 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { HumanMessage } from "@langchain/core/messages";
 import { getApps, initializeApp, getApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { Keypair } from '@solana/web3.js';
 
@@ -131,7 +131,6 @@ bot.on('message:text', async (ctx) => {
     // Get or create user key pair
     const keyPair = await getOrCreateUserKeyPair(userId);
     if (keyPair.inProgress) {
-      await new Promise(resolve => setTimeout(resolve, 11000));
       await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
       return;
     }
@@ -139,6 +138,7 @@ bot.on('message:text', async (ctx) => {
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
+    await updateDoc(userDocRef, { inProgress: true });
     for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
       if ("agent" in chunk) {
         await ctx.reply(String(chunk.agent.messages[0].content) || "I'm sorry, operation failed.");
@@ -153,6 +153,9 @@ bot.on('message:text', async (ctx) => {
       console.error("Error processing stream:", error);
       await ctx.reply("I'm sorry, an error occurred while processing your request.");
     }
+  }
+  finally{
+    await updateDoc(userDocRef, { inProgress: false });
   }
 });
 
