@@ -47,11 +47,14 @@ async function getOrCreateUserKeyPair(userId: string) {
 
   // Generate a new key pair
   const keypair = Keypair.generate();
+  const { agent, config } = await initializeAgent(userId, keypair);
   const keypairData = {
     publicKey: keypair.publicKey.toString(),
     privateKey: String(bs58.encode(keypair.secretKey)),
     inProgress: false,
     inGame: false,
+    agent: agent,
+    config: config,
   };
 
   // Store in Firebase
@@ -62,7 +65,7 @@ async function getOrCreateUserKeyPair(userId: string) {
 
 const WALLET_DATA_FILE = "wallet_data.txt";
 
-async function initializeAgent(userId:string, keyPair: any) {
+async function initializeAgent(userId: string, keyPair: any) {
   try {
     const llm = new ChatOpenAI({
       modelName: "gpt-4o-mini",
@@ -120,24 +123,25 @@ bot.on('message:text', async (ctx) => {
   // await ctx.reply("I'm sorry, I'm not able to process your request at the moment. Please try again later.");
   // return;
   const userId = ctx.from?.id.toString();
-    if (!userId) return;
-    const userDocRef = doc(db, 'users', userId);
-    const userDocSnap = await getDoc(userDocRef);
-  
-    if (!userDocSnap.exists()) {
-      // Get or create user key pair
-      const keyPair = await getOrCreateUserKeyPair(userId);
-      await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
-      await ctx.reply(`${String(keyPair.publicKey)}`);
-    }
+  if (!userId) return;
+  const userDocRef = doc(db, 'users', userId);
+  const userDocSnap = await getDoc(userDocRef);
+
+  if (!userDocSnap.exists()) {
     // Get or create user key pair
     const keyPair = await getOrCreateUserKeyPair(userId);
-    if (keyPair.inProgress) {
-      await new Promise(resolve => setTimeout(resolve, 11000));
-      await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
-      return;
-    }
-  const { agent, config } = await initializeAgent(userId,keyPair);
+    await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
+    await ctx.reply(`${String(keyPair.publicKey)}`);
+  }
+  // Get or create user key pair
+  const keyPair = await getOrCreateUserKeyPair(userId);
+  if (keyPair.inProgress) {
+    await new Promise(resolve => setTimeout(resolve, 11000));
+    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+    return;
+  }
+  const agent = keyPair.agent;
+  const config = keyPair.config;
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
@@ -157,7 +161,7 @@ bot.on('message:text', async (ctx) => {
       await ctx.reply("I'm sorry, an error occurred while processing your request.");
     }
   }
-  finally{
+  finally {
     await updateDoc(userDocRef, { inProgress: false });
   }
 });
