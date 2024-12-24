@@ -86,7 +86,7 @@ async function initializeAgent(userId:string, keyPair: any) {
 
     const tools = createSolanaTools(solanaKit);
     const memory = new MemorySaver();
-    const config = { configurable: { thread_id: userId } };
+    const config = { configurable: { thread_id: "Solana Agent Kit!" } };
 
     const agent = createReactAgent({
       llm,
