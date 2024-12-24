@@ -141,9 +141,9 @@ bot.on('message:text', async (ctx) => {
     await updateDoc(userDocRef, { inProgress: true });
     for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
       if ("agent" in chunk) {
-        await ctx.reply(String(chunk.agent.messages[0].content) || "I'm sorry, operation failed.");
+        if (chunk.agent.messages[0].content) await ctx.reply(String(chunk.agent.messages[0].content));
       } else if ("tools" in chunk) {
-        await ctx.reply(String(chunk.tools.messages[0].content) || "I'm sorry, operation failed.");
+        if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
       }
     }
   } catch (error: any) {
