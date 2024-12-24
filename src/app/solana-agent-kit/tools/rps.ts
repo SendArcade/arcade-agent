@@ -5,6 +5,10 @@ import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, cre
 
 export async function claimback(agent: SolanaAgentKit, pubkey: string) {
     try {
+        const userBalance = (await agent.connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+      if (userBalance < 0.00001) {
+        return `You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`;
+      }
         const receiver = new PublicKey(pubkey);
         const connection = agent.connection;
         const sender = agent.wallet.publicKey;
@@ -93,6 +97,10 @@ export async function rps(
     amount: number,
     choice: "rock" | "paper" | "scissors",
 ) {
+    const userBalance = (await agent.connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+        if (userBalance < amount) {
+          return `OOPS! Looks like you don't have enough SOL in your wallet to play this game. Your balance: ${userBalance} SOL.\n Please top up your wallet by sending the sol to this address:\n${String(agent.wallet.publicKey)}`;
+        }
     try {
         const res = await fetch(
             `https://rps.sendarcade.fun/api/actions/bot?amount=${amount}&choice=${choice}`,
