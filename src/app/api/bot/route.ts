@@ -117,7 +117,6 @@ async function initializeAgent(userId:string, keyPair: any) {
 
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
-  // await ctx.reply("I'm sorry, I'm not available right now. Please try again later.");
   const userId = ctx.from?.id.toString();
     if (!userId) return;
     const userDocRef = doc(db, 'users', userId);
@@ -137,7 +136,6 @@ bot.on('message:text', async (ctx) => {
       return;
     }
   const { agent, config } = await initializeAgent(userId,keyPair);
-  
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
@@ -149,7 +147,6 @@ bot.on('message:text', async (ctx) => {
         if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
       }
     }
-    await updateDoc(userDocRef, { inProgress: false });
   } catch (error: any) {
     if (error.message === 'Timeout') {
       await ctx.reply("I'm sorry, the operation took too long and timed out. Please try again.");
