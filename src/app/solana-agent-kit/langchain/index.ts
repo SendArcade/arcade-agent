@@ -27,17 +27,9 @@ export class SolanaBalanceTool extends Tool {
       const tokenAddress = input ? new PublicKey(input) : undefined;
       const balance = await this.solanaKit.getBalance(tokenAddress);
 
-      return JSON.stringify({
-        status: "success",
-        balance: balance,
-        token: input || "SOL",
-      });
+      return balance ? balance.toString() : "Not found.";
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -69,21 +61,9 @@ export class SolanaTransferTool extends Tool {
         parsedInput.amount,
         mintAddress
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Transfer completed successfully",
-        amount: parsedInput.amount,
-        recipient: parsedInput.to,
-        token: parsedInput.mint || "SOL",
-        transaction: tx,
-      });
+      return "Transfer completed successfully of " + parsedInput.amount + " to " + parsedInput.to + " with tx " + tx;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -114,19 +94,9 @@ export class SolanaDeployTokenTool extends Tool {
         parsedInput.decimals,
         parsedInput.initialSupply
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Token deployed successfully",
-        mintAddress: result.mint.toString(),
-        decimals: parsedInput.decimals || 9,
-      });
+      return "Token deployed successfully with mint address " + result.mint+ " and decimals " + (parsedInput.decimals || 9);
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -149,19 +119,9 @@ export class SolanaDeployCollectionTool extends Tool {
       const parsedInput = JSON.parse(input);
 
       const result = await this.solanaKit.deployCollection(parsedInput);
-
-      return JSON.stringify({
-        status: "success",
-        message: "Collection deployed successfully",
-        collectionAddress: result.collectionAddress.toString(),
-        name: parsedInput.name,
-      });
+      return "Collection deployed successfully with mint address " + result.collectionAddress+ " and name " + parsedInput.name;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -194,24 +154,9 @@ export class SolanaMintNFTTool extends Tool {
           ? new PublicKey(parsedInput.recipient)
           : this.solanaKit.wallet_address
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "NFT minted successfully",
-        mintAddress: result.mint.toString(),
-        metadata: {
-          name: parsedInput.name,
-          symbol: parsedInput.symbol,
-          uri: parsedInput.uri,
-        },
-        recipient: parsedInput.recipient || result.mint.toString(),
-      });
+      return "NFT minted successfully with mint address " + result.mint.toString()+ " and name " + parsedInput.name+ " and symbol " + parsedInput.symbol+ " and uri " + parsedInput.uri+ " and recipient " + parsedInput.recipient;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -242,21 +187,9 @@ export class SolanaTradeTool extends Tool {
           : new PublicKey("So11111111111111111111111111111111111111112"),
         parsedInput.slippageBps
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Trade executed successfully",
-        transaction: tx,
-        inputAmount: parsedInput.inputAmount,
-        inputToken: parsedInput.inputMint || "SOL",
-        outputToken: parsedInput.outputMint,
-      });
+      return "Trade executed successfully with tx " + tx+ " and inputAmount " + parsedInput.inputAmount+ " and inputToken " + parsedInput.inputMint+ " and outputToken " + parsedInput.outputMint;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -272,18 +205,9 @@ export class SolanaRequestFundsTool extends Tool {
   protected async _call(_input: string): Promise<string> {
     try {
       await this.solanaKit.requestFaucetFunds();
-
-      return JSON.stringify({
-        status: "success",
-        message: "Successfully requested faucet funds",
-        network: this.solanaKit.connection.rpcEndpoint.split("/")[2],
-      });
+      return "Funds requested successfully"+ " and network is " + this.solanaKit.connection.rpcEndpoint.split("/")[2];
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -322,20 +246,9 @@ export class SolanaRegisterDomainTool extends Tool {
         parsedInput.name,
         parsedInput.spaceKB || 1
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Domain registered successfully",
-        transaction: tx,
-        domain: `${parsedInput.name}.sol`,
-        spaceKB: parsedInput.spaceKB || 1,
-      });
+      return "Domain registered successfully with tx " + tx+ " and domain " + parsedInput.name+ " and spaceKB " + parsedInput.spaceKB;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -356,18 +269,9 @@ export class SolanaResolveDomainTool extends Tool {
     try {
       const domain = input.trim();
       const publicKey = await this.solanaKit.resolveSolDomain(domain);
-
-      return JSON.stringify({
-        status: "success",
-        message: "Domain resolved successfully",
-        publicKey: publicKey.toBase58(),
-      });
+      return "Domain resolved successfully with publicKey " + publicKey.toBase58();
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -388,18 +292,9 @@ export class SolanaGetDomainTool extends Tool {
     try {
       const account = new PublicKey(input.trim());
       const domain = await this.solanaKit.getPrimaryDomain(account);
-
-      return JSON.stringify({
-        status: "success",
-        message: "Primary domain retrieved successfully",
-        domain,
-      });
+      return "Primary domain retrieved successfully with domain " + domain;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -477,19 +372,9 @@ export class SolanaPumpfunTokenLaunchTool extends Tool {
           initialLiquiditySOL: parsedInput.initialLiquiditySOL,
         }
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Token launched successfully on Pump.fun",
-        tokenName: parsedInput.tokenName,
-        tokenTicker: parsedInput.tokenTicker,
-      });
+      return "Token launched successfully on Pump.fun and tokenName " + parsedInput.tokenName+ " and tokenTicker " + parsedInput.tokenTicker;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -513,18 +398,9 @@ export class SolanaCreateImageTool extends Tool {
     try {
       this.validateInput(input);
       const result = await create_image(this.solanaKit, input.trim());
-
-      return JSON.stringify({
-        status: "success",
-        message: "Image created successfully",
-        ...result,
-      });
+      return "Image created successfully with prompt."+ " and result " + result.images[0].toString();
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -545,19 +421,9 @@ export class SolanaLendAssetTool extends Tool {
       let amount = JSON.parse(input).amount || input;
 
       const tx = await this.solanaKit.lendAssets(amount);
-
-      return JSON.stringify({
-        status: "success",
-        message: "Asset lent successfully",
-        transaction: tx,
-        amount: amount,
-      });
+      return "Asset lent successfully with tx " + tx+ " and amount " + amount;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -596,19 +462,9 @@ export class SolanaStakeTool extends Tool {
       const parsedInput = JSON.parse(input) || Number(input);
 
       const tx = await this.solanaKit.stake(parsedInput.amount);
-
-      return JSON.stringify({
-        status: "success",
-        message: "Staked successfully",
-        transaction: tx,
-        amount: parsedInput.amount,
-      });
+      return "Staked successfully with tx " + tx+ " and amount " + parsedInput.amount;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -630,17 +486,9 @@ export class SolanaFetchPriceTool extends Tool {
   async _call(input: string): Promise<string> {
     try {
       const price = await fetchPrice(this.solanaKit, input.trim());
-      return JSON.stringify({
-        status: "success",
-        tokenId: input.trim(),
-        priceInUSDC: price,
-      });
+      return "Price fetched successfully with price " + price+ " and tokenId " + input.trim();
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -661,17 +509,9 @@ export class SolanaTokenDataTool extends Tool {
       const parsedInput = input.trim();
 
       const tokenData = await this.solanaKit.getTokenDataByAddress(parsedInput);
-
-      return JSON.stringify({
-        status: "success",
-        tokenData: tokenData,
-      });
+      return "Token data fetched successfully with tokenData " + tokenData+ " and mintAddress " + parsedInput;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -691,16 +531,9 @@ export class SolanaTokenDataByTickerTool extends Tool {
     try {
       const ticker = input.trim();
       const tokenData = await this.solanaKit.getTokenDataByTicker(ticker);
-      return JSON.stringify({
-        status: "success",
-        tokenData: tokenData,
-      });
+      return "Token data fetched successfully with tokenData " + tokenData+ " and ticker " + ticker;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -733,18 +566,9 @@ export class SolanaCompressedAirdropTool extends Tool {
         parsedInput.priorityFeeInLamports || 30_000,
         parsedInput.shouldLog || false
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: `Airdropped ${parsedInput.amount} tokens to ${parsedInput.recipients.length} recipients.`,
-        transactionHashes: txs,
-      });
+      return "Airdropped successfully with txs " + txs+ " and mintAddress " + parsedInput.mintAddress+ " and amount " + parsedInput.amount+ " and decimals " + parsedInput.decimals+ " and recipients " + parsedInput.recipients;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -787,18 +611,9 @@ export class SolanaCreateSingleSidedWhirlpoolTool extends Tool {
         maxPrice,
         feeTier,
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Single-sided Whirlpool created successfully",
-        transaction: txId,
-      });
+      return "Single-sided Whirlpool created successfully with txId " + txId;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -829,18 +644,9 @@ export class SolanaRaydiumCreateAmmV4 extends Tool {
         new BN(inputFormat.quoteAmount),
         new BN(inputFormat.startTime),
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Create raydium amm v4 pool successfully",
-        transaction: tx,
-      });
+      return "Create raydium amm v4 pool successfully with tx " + tx;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -874,18 +680,9 @@ export class SolanaRaydiumCreateClmm extends Tool {
         new Decimal(inputFormat.initialPrice),
         new BN(inputFormat.startTime),
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Create raydium clmm pool successfully",
-        transaction: tx,
-      });
+      return "Create raydium clmm pool successfully with tx " + tx;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -922,18 +719,9 @@ export class SolanaRaydiumCreateCpmm extends Tool {
 
         new BN(inputFormat.startTime),
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Create raydium cpmm pool successfully",
-        transaction: tx,
-      });
+      return "Create raydium cpmm pool successfully with tx " + tx;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -964,18 +752,9 @@ export class SolanaOpenbookCreateMarket extends Tool {
         inputFormat.lotSize,
         inputFormat.tickSize,
       );
-
-      return JSON.stringify({
-        status: "success",
-        message: "Create openbook market successfully",
-        transaction: tx,
-      });
+      return "Create openbook market successfully with tx " + tx;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }
@@ -1011,17 +790,9 @@ export class SolanaRockPaperScissorsTool extends Tool {
         Number(parsedInput['"amount"']),
         parsedInput['"choice"'].replace(/^"|"$/g, '') as "rock" | "paper" | "scissors"
       );
-      
-      return JSON.stringify({
-        status: "success",
-        message: result,
-      });
+      return result;
     } catch (error: any) {
-      return JSON.stringify({
-        status: "error",
-        message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      });
+      return String(error.message);
     }
   }
 }

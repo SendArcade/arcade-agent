@@ -137,12 +137,21 @@ bot.on('message:text', async (ctx) => {
     }
   const { agent, config } = await initializeAgent(userId,keyPair);
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
-  for await (const chunk of stream) {
-    if ("agent" in chunk) {
-      await ctx.reply(String(chunk.agent.messages[0].content));
-      // console.log(chunk.agent.messages[0].content);
-    } else if ("tools" in chunk) {
-      await ctx.reply(String(chunk.tools.messages[0].content));
+  const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
+  try {
+    for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
+      if ("agent" in chunk) {
+        await ctx.reply(String(chunk.agent.messages[0].content) || "I'm sorry, operation failed.");
+      } else if ("tools" in chunk) {
+        await ctx.reply(String(chunk.tools.messages[0].content) || "I'm sorry, operation failed.");
+      }
+    }
+  } catch (error: any) {
+    if (error.message === 'Timeout') {
+      await ctx.reply("I'm sorry, the operation took too long and timed out. Please try again.");
+    } else {
+      console.error("Error processing stream:", error);
+      await ctx.reply("I'm sorry, an error occurred while processing your request.");
     }
   }
 });
