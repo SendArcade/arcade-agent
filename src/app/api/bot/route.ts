@@ -117,48 +117,49 @@ async function initializeAgent(userId:string, keyPair: any) {
 
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
-  const userId = ctx.from?.id.toString();
-    if (!userId) return;
-    const userDocRef = doc(db, 'users', userId);
-    const userDocSnap = await getDoc(userDocRef);
+  await ctx.reply("I'm sorry, I'm still under development. Please try again later.");
+  // const userId = ctx.from?.id.toString();
+  //   if (!userId) return;
+  //   const userDocRef = doc(db, 'users', userId);
+  //   const userDocSnap = await getDoc(userDocRef);
   
-    if (!userDocSnap.exists()) {
-      // Get or create user key pair
-      const keyPair = await getOrCreateUserKeyPair(userId);
-      await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
-      await ctx.reply(`${String(keyPair.publicKey)}`);
-    }
-    // Get or create user key pair
-    const keyPair = await getOrCreateUserKeyPair(userId);
-    if (keyPair.inProgress) {
-      await new Promise(resolve => setTimeout(resolve, 11000));
-      await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
-      return;
-    }
-  const { agent, config } = await initializeAgent(userId,keyPair);
-  const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
-  const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
-  try {
-    await updateDoc(userDocRef, { inProgress: true });
-    for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
-      if ("agent" in chunk) {
-        if (chunk.agent.messages[0].content) await ctx.reply(String(chunk.agent.messages[0].content));
-      } else if ("tools" in chunk) {
-        if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
-      }
-    }
-    await updateDoc(userDocRef, { inProgress: false });
-  } catch (error: any) {
-    if (error.message === 'Timeout') {
-      await ctx.reply("I'm sorry, the operation took too long and timed out. Please try again.");
-    } else {
-      console.error("Error processing stream:", error);
-      await ctx.reply("I'm sorry, an error occurred while processing your request.");
-    }
-  }
-  finally{
-    await updateDoc(userDocRef, { inProgress: false });
-  }
+  //   if (!userDocSnap.exists()) {
+  //     // Get or create user key pair
+  //     const keyPair = await getOrCreateUserKeyPair(userId);
+  //     await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
+  //     await ctx.reply(`${String(keyPair.publicKey)}`);
+  //   }
+  //   // Get or create user key pair
+  //   const keyPair = await getOrCreateUserKeyPair(userId);
+  //   if (keyPair.inProgress) {
+  //     await new Promise(resolve => setTimeout(resolve, 11000));
+  //     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+  //     return;
+  //   }
+  // const { agent, config } = await initializeAgent(userId,keyPair);
+  // const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
+  // const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
+  // try {
+  //   await updateDoc(userDocRef, { inProgress: true });
+  //   for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
+  //     if ("agent" in chunk) {
+  //       if (chunk.agent.messages[0].content) await ctx.reply(String(chunk.agent.messages[0].content));
+  //     } else if ("tools" in chunk) {
+  //       if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
+  //     }
+  //   }
+  //   await updateDoc(userDocRef, { inProgress: false });
+  // } catch (error: any) {
+  //   if (error.message === 'Timeout') {
+  //     await ctx.reply("I'm sorry, the operation took too long and timed out. Please try again.");
+  //   } else {
+  //     console.error("Error processing stream:", error);
+  //     await ctx.reply("I'm sorry, an error occurred while processing your request.");
+  //   }
+  // }
+  // finally{
+  //   await updateDoc(userDocRef, { inProgress: false });
+  // }
 });
 
 
