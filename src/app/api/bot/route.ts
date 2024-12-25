@@ -15,7 +15,12 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { Keypair } from '@solana/web3.js';
 import * as readline from "readline";
+import { i } from '@raydium-io/raydium-sdk-v2/lib/raydium-2dba5baa';
 
+const AGENT_FOLDER = "agents";
+if (!fs.existsSync(AGENT_FOLDER)) {
+  fs.mkdirSync(AGENT_FOLDER);
+}
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error('TELEGRAM_BOT_TOKEN environment variable not found.');
@@ -47,14 +52,11 @@ async function getOrCreateUserKeyPair(userId: string) {
 
   // Generate a new key pair
   const keypair = Keypair.generate();
-  const { agent, config } = await initializeAgent(userId, keypair);
   const keypairData = {
     publicKey: keypair.publicKey.toString(),
     privateKey: String(bs58.encode(keypair.secretKey)),
     inProgress: false,
     inGame: false,
-    agent: agent,
-    config: config,
   };
 
   // Store in Firebase
@@ -64,6 +66,48 @@ async function getOrCreateUserKeyPair(userId: string) {
 }
 
 const WALLET_DATA_FILE = "wallet_data.txt";
+// async function getAgent(userId: string) {
+//   const agentFilePath = `${AGENT_FOLDER}/${userId}.json`;
+
+//   // Check if a file exists for the user
+//   if (fs.existsSync(agentFilePath)) {
+//     try {
+//       const fileContent = fs.readFileSync(agentFilePath, "utf8");
+//       const { agentData, config } = JSON.parse(fileContent);
+//       return { agent: restoreAgent(agentData), config };
+//     } catch (error) {
+//       console.error("Error reading agent file:", error);
+//       throw new Error("Failed to fetch agent configuration from file.");
+//     }
+//   }
+
+//   // File does not exist, initialize a new agent
+//   const keyPair = await getOrCreateUserKeyPair(userId);
+//   const { agent, config } = await initializeAgent(userId, keyPair);
+//   // Serialize agent to a storable format
+//   const agentData = serializeAgent(agent);
+//   // Save the agent and config to a file
+//   try {
+//     fs.writeFileSync(agentFilePath, JSON.stringify({ agentData, config }, null, 2), "utf8");
+//   } catch (error) {
+//     console.error("Error writing agent file:", error);
+//     throw new Error("Failed to save agent configuration to file.");
+//   }
+
+//   return { agent, config };
+// }
+// // Helper function to serialize the agent
+// function serializeAgent(agent:any) {
+//   // Implement serialization logic based on the agent's structure
+//   return agent;
+// }
+
+// // Helper function to restore the agent from serialized data
+// function restoreAgent(agentData:any) {
+//   const agent = createReactAgent(agentData);
+//   // Implement restoration logic based on the agent's structure
+//   return agent;
+// }
 
 async function initializeAgent(userId: string, keyPair: any) {
   try {
@@ -117,7 +161,7 @@ async function initializeAgent(userId: string, keyPair: any) {
     throw error;
   }
 }
-
+let agent: { stream: (arg0: { messages: HumanMessage[]; }, arg1: any) => any; }, config: any;
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
   // await ctx.reply("I'm sorry, I'm not able to process your request at the moment. Please try again later.");
@@ -132,6 +176,7 @@ bot.on('message:text', async (ctx) => {
     const keyPair = await getOrCreateUserKeyPair(userId);
     await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
     await ctx.reply(`${String(keyPair.publicKey)}`);
+    ({agent, config} = await initializeAgent(userId, keyPair));
   }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
@@ -140,8 +185,6 @@ bot.on('message:text', async (ctx) => {
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
     return;
   }
-  const agent = keyPair.agent;
-  const config = keyPair.config;
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
