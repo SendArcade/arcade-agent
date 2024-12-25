@@ -10,13 +10,9 @@ import { toJSON } from "../utils/toJSON";
 
 export class SolanaBalanceTool extends Tool {
   name = "solana_balance";
-  description = `Get the balance of a Solana wallet or token account.
-
-  If you want to get the balance of your wallet, you don't need to provide the tokenAddress.
-  If no tokenAddress is provided, the balance will be in SOL.
-
+  description = `Get the balance of a Solana wallet 
   Inputs:
-  tokenAddress: string, eg "So11111111111111111111111111111111111111112" (optional)`;
+  no inputs required`;
 
   constructor(private solanaKit: SolanaAgentKit) {
     super();
@@ -27,7 +23,7 @@ export class SolanaBalanceTool extends Tool {
       const tokenAddress = input ? new PublicKey(input) : undefined;
       const balance = await this.solanaKit.getBalance(tokenAddress);
 
-      return balance ? balance.toString() : "Not found.";
+      return balance!=undefined ? balance.toString() : "Not found.";
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }

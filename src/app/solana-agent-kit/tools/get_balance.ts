@@ -9,11 +9,11 @@ import { SolanaAgentKit } from "../index";
  */
 export async function get_balance(
   agent: SolanaAgentKit,
-  token_address?: PublicKey
+  // token_address?: PublicKey
 ) {
-  if (!token_address)
+  // if (!token_address)
     return await agent.connection.getBalance(agent.wallet_address) / LAMPORTS_PER_SOL
 
-  const token_account = await agent.connection.getTokenAccountBalance(token_address);
-  return token_account.value.uiAmount;
+  // const token_account = await agent.connection.getTokenAccountBalance(token_address);
+  // return token_account.value.uiAmount;
 }

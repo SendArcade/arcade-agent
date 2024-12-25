@@ -78,7 +78,7 @@ export class SolanaAgentKit {
   }
 
   async getBalance(token_address?: PublicKey) {
-    return get_balance(this, token_address);
+    return get_balance(this);
   }
 
   async mintNFT(
