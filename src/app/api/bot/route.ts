@@ -14,13 +14,6 @@ import { getApps, initializeApp, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { Keypair } from '@solana/web3.js';
-import * as readline from "readline";
-import { i } from '@raydium-io/raydium-sdk-v2/lib/raydium-2dba5baa';
-
-const AGENT_FOLDER = "agents";
-if (!fs.existsSync(AGENT_FOLDER)) {
-  fs.mkdirSync(AGENT_FOLDER);
-}
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error('TELEGRAM_BOT_TOKEN environment variable not found.');
@@ -66,48 +59,6 @@ async function getOrCreateUserKeyPair(userId: string) {
 }
 
 const WALLET_DATA_FILE = "wallet_data.txt";
-// async function getAgent(userId: string) {
-//   const agentFilePath = `${AGENT_FOLDER}/${userId}.json`;
-
-//   // Check if a file exists for the user
-//   if (fs.existsSync(agentFilePath)) {
-//     try {
-//       const fileContent = fs.readFileSync(agentFilePath, "utf8");
-//       const { agentData, config } = JSON.parse(fileContent);
-//       return { agent: restoreAgent(agentData), config };
-//     } catch (error) {
-//       console.error("Error reading agent file:", error);
-//       throw new Error("Failed to fetch agent configuration from file.");
-//     }
-//   }
-
-//   // File does not exist, initialize a new agent
-//   const keyPair = await getOrCreateUserKeyPair(userId);
-//   const { agent, config } = await initializeAgent(userId, keyPair);
-//   // Serialize agent to a storable format
-//   const agentData = serializeAgent(agent);
-//   // Save the agent and config to a file
-//   try {
-//     fs.writeFileSync(agentFilePath, JSON.stringify({ agentData, config }, null, 2), "utf8");
-//   } catch (error) {
-//     console.error("Error writing agent file:", error);
-//     throw new Error("Failed to save agent configuration to file.");
-//   }
-
-//   return { agent, config };
-// }
-// // Helper function to serialize the agent
-// function serializeAgent(agent:any) {
-//   // Implement serialization logic based on the agent's structure
-//   return agent;
-// }
-
-// // Helper function to restore the agent from serialized data
-// function restoreAgent(agentData:any) {
-//   const agent = createReactAgent(agentData);
-//   // Implement restoration logic based on the agent's structure
-//   return agent;
-// }
 
 async function initializeAgent(userId: string, keyPair: any) {
   try {
