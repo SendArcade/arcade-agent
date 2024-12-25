@@ -98,7 +98,7 @@ async function initializeAgent(userId: string, keyPair: any) {
         can't do with your currently available tools, you must say so, and encourage them to implement it 
         themselves using the Solana Agent Kit, recommend they go to https://sendai.fun/kit for more information. Be 
         concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is 
-        explicitly requested.
+        explicitly requested. Do not send any formatting in the response.
       `,
     });
 
@@ -145,9 +145,10 @@ bot.on('message:text', async (ctx) => {
     for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
       if ("agent" in chunk) {
         if (chunk.agent.messages[0].content) await ctx.reply(String(chunk.agent.messages[0].content));
-      } else if ("tools" in chunk) {
-        if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
-      }
+      } 
+      // else if ("tools" in chunk) {
+      //   if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
+      // }
     }
   } catch (error: any) {
     if (error.message === 'Timeout') {

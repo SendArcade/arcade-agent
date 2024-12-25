@@ -3,95 +3,95 @@ import { SolanaAgentKit } from "../agent";
 import { MEMO_PROGRAM_ID } from "@raydium-io/raydium-sdk-v2";
 import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } from "@solana/spl-token";
 
-export async function claimback(agent: SolanaAgentKit, pubkey: string) {
-    try {
-        const userBalance = (await agent.connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
-      if (userBalance < 0.00001) {
-        return `You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`;
-      }
-        const receiver = new PublicKey(pubkey);
-        const connection = agent.connection;
-        const sender = agent.wallet.publicKey;
+// export async function claimback(agent: SolanaAgentKit, pubkey: string) {
+//     try {
+//         const userBalance = (await agent.connection.getBalance(agent.wallet.publicKey)) / LAMPORTS_PER_SOL;
+//       if (userBalance < 0.00001) {
+//         return `You do not have enough amount in your wallet to claimback. Your balance: ${userBalance} SOL.`;
+//       }
+//         const receiver = new PublicKey(pubkey);
+//         const connection = agent.connection;
+//         const sender = agent.wallet.publicKey;
 
-        // Mint address for the token to be transferred
-        const mintAddress = "SENDdRQtYMWaQrBroBrJ2Q53fgVuq95CV9UPGEvpCxa";
-        const mintPublicKey = new PublicKey(mintAddress);
+//         // Mint address for the token to be transferred
+//         const mintAddress = "SENDdRQtYMWaQrBroBrJ2Q53fgVuq95CV9UPGEvpCxa";
+//         const mintPublicKey = new PublicKey(mintAddress);
 
-        const transaction = new Transaction();
+//         const transaction = new Transaction();
 
-        // Get associated token account for the sender and receiver
-        const senderTokenAccount = await getAssociatedTokenAddress(mintPublicKey, sender);
-        const receiverTokenAccount = await getAssociatedTokenAddress(mintPublicKey, receiver);
+//         // Get associated token account for the sender and receiver
+//         const senderTokenAccount = await getAssociatedTokenAddress(mintPublicKey, sender);
+//         const receiverTokenAccount = await getAssociatedTokenAddress(mintPublicKey, receiver);
 
-        // Check if the receiver's associated token account exists
-        const receiverAccountInfo = await connection.getAccountInfo(receiverTokenAccount);
-        if (!receiverAccountInfo) {
-            transaction.add(
-                createAssociatedTokenAccountInstruction(
-                    sender, // Payer
-                    receiverTokenAccount,
-                    receiver, // Owner of the new account
-                    mintPublicKey // Token mint
-                )
-            );
-        }
+//         // Check if the receiver's associated token account exists
+//         const receiverAccountInfo = await connection.getAccountInfo(receiverTokenAccount);
+//         if (!receiverAccountInfo) {
+//             transaction.add(
+//                 createAssociatedTokenAccountInstruction(
+//                     sender, // Payer
+//                     receiverTokenAccount,
+//                     receiver, // Owner of the new account
+//                     mintPublicKey // Token mint
+//                 )
+//             );
+//         }
 
-        // Get the sender's token balance
-        const senderTokenBalance = await connection.getTokenAccountBalance(senderTokenAccount);
-        const tokenAmount = BigInt(senderTokenBalance.value.amount);
+//         // Get the sender's token balance
+//         const senderTokenBalance = await connection.getTokenAccountBalance(senderTokenAccount);
+//         const tokenAmount = BigInt(senderTokenBalance.value.amount);
 
-        if (tokenAmount > 0) {
-            // Transfer the token balance to the receiver
-            transaction.add(
-                createTransferInstruction(
-                    senderTokenAccount,
-                    receiverTokenAccount,
-                    sender,
-                    tokenAmount
-                )
-            );
-        }
+//         if (tokenAmount > 0) {
+//             // Transfer the token balance to the receiver
+//             transaction.add(
+//                 createTransferInstruction(
+//                     senderTokenAccount,
+//                     receiverTokenAccount,
+//                     sender,
+//                     tokenAmount
+//                 )
+//             );
+//         }
 
-        // Transfer remaining SOL balance to the receiver
-        const solBalance = await connection.getBalance(sender);
-        const estimatedFee = 0.000008 * LAMPORTS_PER_SOL; // Example fee estimation
-        const transferableSol = solBalance - estimatedFee;
+//         // Transfer remaining SOL balance to the receiver
+//         const solBalance = await connection.getBalance(sender);
+//         const estimatedFee = 0.000008 * LAMPORTS_PER_SOL; // Example fee estimation
+//         const transferableSol = solBalance - estimatedFee;
 
-        if (transferableSol > 0) {
-            transaction.add(
-                SystemProgram.transfer({
-                    fromPubkey: sender,
-                    toPubkey: receiver,
-                    lamports: transferableSol,
-                })
-            );
-        }
+//         if (transferableSol > 0) {
+//             transaction.add(
+//                 SystemProgram.transfer({
+//                     fromPubkey: sender,
+//                     toPubkey: receiver,
+//                     lamports: transferableSol,
+//                 })
+//             );
+//         }
 
-        // Add memo instruction
-        transaction.add(
-            new TransactionInstruction({
-                programId: new PublicKey(MEMO_PROGRAM_ID),
-                data: Buffer.from(`claimback:${pubkey}`, "utf8"),
-                keys: [],
-            })
-        );
+//         // Add memo instruction
+//         transaction.add(
+//             new TransactionInstruction({
+//                 programId: new PublicKey(MEMO_PROGRAM_ID),
+//                 data: Buffer.from(`claimback:${pubkey}`, "utf8"),
+//                 keys: [],
+//             })
+//         );
 
-        // Set the fee payer and recent blockhash
-        transaction.feePayer = sender;
-        transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+//         // Set the fee payer and recent blockhash
+//         transaction.feePayer = sender;
+//         transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-        // Send the transaction
-        await sendAndConfirmTransaction(connection, transaction, [agent.wallet], {
-            commitment: 'confirmed',
-            skipPreflight: true,
-        });
+//         // Send the transaction
+//         await sendAndConfirmTransaction(connection, transaction, [agent.wallet], {
+//             commitment: 'confirmed',
+//             skipPreflight: true,
+//         });
 
-        return "Claimback successful, amount might reflect in your account in some time.";
-    } catch (error: any) {
-        console.error(error);
-        throw new Error(`Claimback failed: ${error.message}`);
-    }
-}
+//         return "Claimback successful, amount might reflect in your account in some time.";
+//     } catch (error: any) {
+//         console.error(error);
+//         throw new Error(`Claimback failed: ${error.message}`);
+//     }
+// }
 export async function rps(
     agent: SolanaAgentKit,
     amount: number,

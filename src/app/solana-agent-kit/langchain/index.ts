@@ -795,24 +795,19 @@ export class SolanaRockPaperScissorsTool extends Tool {
 
 export class SolanaClaimBackTool extends Tool {
   name = "claim_back";
-  description = `Claim back the funds to a given pubkey
-  Inputs(convert the input to a json string):
-  pubkey: string, (required)
+  description = `Claim back the funds from the agent's wallet.
   `;
 
   constructor(private solanaKit: SolanaAgentKit) {
     super();
   }
 
-  protected async _call(input: string): Promise<string> {
+  protected async _call(): Promise<string> {
     try {
-      const parsedInput = toJSON(input);
-      const result = await this.solanaKit.claimBack(
-        String(parsedInput['"pubkey"']),
-      );
+      const result = await this.solanaKit.claimBack();
       return result;
     } catch (error: any) {
-      return "Sorry an error occurred. Please try again later.";
+      return "Sorry an error occurred here . Please try again later.";
     }
   }
 }
