@@ -147,12 +147,11 @@ bot.on('message:text', async (ctx) => {
   }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
-  const {agent, config} = await initializeAgent(userId, keyPair);
   if (keyPair.inProgress) {
-    await new Promise(resolve => setTimeout(resolve, 11000));
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
     return;
   }
+  const {agent, config} = await initializeAgent(userId, keyPair);
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
