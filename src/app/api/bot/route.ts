@@ -14,10 +14,15 @@ import { getApps, initializeApp, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { Keypair } from '@solana/web3.js';
+import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error('TELEGRAM_BOT_TOKEN environment variable not found.');
 const bot = new Bot(token);
+
+const checkpointer = PostgresSaver.fromConnString(
+  process.env.POSTGRES_GCP_LINK!,
+);
 
 // Firebase
 const firebaseConfig = {
@@ -84,12 +89,12 @@ async function initializeAgent(userId: string, keyPair: any) {
     );
 
     const tools = createSolanaTools(solanaKit);
-    const memory = new MemorySaver();
+    await checkpointer.setup();
     const config = { configurable: { thread_id: userId } };
     const agent = createReactAgent({
       llm,
       tools,
-      checkpointSaver: memory,
+      checkpointSaver: checkpointer,
       messageModifier: `
         You are a helpful Send Arcade agent that can interact onchain using the Solana Agent Kit. You are 
         empowered to interact onchain using your tools. If you ever need funds, you can request them from the 
@@ -98,7 +103,19 @@ async function initializeAgent(userId: string, keyPair: any) {
         can't do with your currently available tools, you must say so, and encourage them to implement it 
         themselves using the Solana Agent Kit, recommend they go to https://sendai.fun/kit for more information. Be 
         concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is 
-        explicitly requested. Do not send any formatting in the response.
+        explicitly requested. Do not send any formatting in the response. You can
+         - Check wallet balances.
+         - Transfer tokens or SOL.
+         - Deploy new tokens and NFT collections.
+         - Mint NFTs.
+         - Swap tokens.
+         - Stake SOL.
+         - Register .sol domain names.
+         - Request funds from a faucet (for testnet/devnet).
+         - Fetch token prices.
+         - Manage liquidity pools and market interactions.
+         - Play games like rock-paper-scissors. 
+         and more
       `,
     });
 
@@ -127,12 +144,10 @@ bot.on('message:text', async (ctx) => {
     const keyPair = await getOrCreateUserKeyPair(userId);
     await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
     await ctx.reply(`${String(keyPair.publicKey)}`);
-    ({agent, config} = await initializeAgent(userId, keyPair));
   }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
-  if (!agent)
-  ({agent, config} = await initializeAgent(userId, keyPair));
+  const {agent, config} = await initializeAgent(userId, keyPair);
   if (keyPair.inProgress) {
     await new Promise(resolve => setTimeout(resolve, 11000));
     await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
