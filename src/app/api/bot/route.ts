@@ -171,6 +171,7 @@ bot.on('message:text', async (ctx) => {
     } else {
       console.error("Error processing stream:", error);
       await ctx.reply("I'm sorry, an error occurred while processing your request.");
+      await updateDoc(userDocRef, { inProgress: false });
     }
   }
   finally {
