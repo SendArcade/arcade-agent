@@ -786,7 +786,7 @@ export class SolanaRockPaperScissorsTool extends Tool {
         Number(parsedInput['"amount"']),
         parsedInput['"choice"'].replace(/^"|"$/g, '') as "rock" | "paper" | "scissors"
       );
-      return "https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg\n"+result;
+      return "https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg\n"+ await result;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
