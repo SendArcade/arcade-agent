@@ -140,9 +140,25 @@ bot.on('message:text', async (ctx) => {
 
   if (!userDocSnap.exists()) {
     // Get or create user key pair
+    const codeDocRef = doc(db, 'inviteCodes', ctx.message.text);
+    const codeDocSnap = await getDoc(codeDocRef);
+    if (!codeDocSnap.exists()) {
+      await ctx.reply(`Invalid invite code. Please try again.`);
+      return;
+    }
+    const data = await getDoc(codeDocRef);
+    const codeData = data.data();
+    if (codeData?.usedBy != null) {
+      await ctx.reply(`Invite code has already been used. Please try again.`);
+      return;
+    }
+    else{
+    await updateDoc(codeDocRef, { usedBy: userId });
     const keyPair = await getOrCreateUserKeyPair(userId);
     await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
     await ctx.reply(`${String(keyPair.publicKey)}`);
+    return;
+    }
   }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
