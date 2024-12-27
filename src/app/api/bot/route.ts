@@ -110,7 +110,6 @@ async function initializeAgent(userId: string, keyPair: any) {
          - Mint NFTs.
          - Swap tokens.
          - Stake SOL.
-         - Register .sol domain names.
          - Request funds from a faucet (for testnet/devnet).
          - Fetch token prices.
          - Manage liquidity pools and market interactions.
@@ -148,7 +147,7 @@ bot.on('message:text', async (ctx) => {
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
   if (keyPair.inProgress) {
-    await ctx.reply(`Hold on! I'm still processing your last move. 🎮`);
+    await ctx.reply(`Hold on! I'm still processing your last command.`);
     return;
   }
   const {agent, config} = await initializeAgent(userId, keyPair);
