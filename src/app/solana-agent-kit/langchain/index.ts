@@ -708,7 +708,7 @@ export class SolanaRockPaperScissorsTool extends Tool {
 
 export class SolanaClaimBackTool extends Tool {
   name = "claim_back";
-  description = `Claim back the funds from the agent's wallet.
+  description = `Claim back the funds from the agent's wallet. Or if the user asks for his private key.
   `;
 
   constructor(private solanaKit: SolanaAgentKit) {

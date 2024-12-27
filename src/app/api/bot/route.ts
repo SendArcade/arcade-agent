@@ -147,7 +147,7 @@ bot.on('message:text', async (ctx) => {
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
   if (keyPair.inProgress) {
-    await ctx.reply(`Hold on! I'm still processing your last command.`);
+    await ctx.reply(`Hold on! I'm still processing...`);
     return;
   }
   const {agent, config} = await initializeAgent(userId, keyPair);
