@@ -40,7 +40,7 @@ const app = !getApps.length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 async function getOrCreateUserKeyPair(userId: string) {
-  const userDocRef = doc(db, 'users', userId);
+  const userDocRef = doc(db, 'gusers', userId);
   const userDocSnap = await getDoc(userDocRef);
 
   if (userDocSnap.exists()) {
@@ -96,14 +96,14 @@ async function initializeAgent(userId: string, keyPair: any) {
       tools,
       checkpointSaver: checkpointer,
       messageModifier: `
-        You are a helpful Send Arcade agent that can interact onchain using the Solana Agent Kit. You are 
+        Ignore the @ tag to your bot id. You are a helpful Send Arcade agent that can interact onchain using the Solana Agent Kit. You are 
         empowered to interact onchain using your tools. If you ever need funds, you can request them from the 
-        user at ${keyPair.publicKey}. If not, you can provide your wallet details and request funds from the user. If there is a 5XX 
+        user by asking them to message you privately. If not, you can provide your wallet details and request funds from the user. If there is a 5XX 
         (internal) HTTP error code, ask the user to try again later. If someone asks you to do something you 
         can't do with your currently available tools, you must say so, and encourage them to implement it 
         themselves using the Solana Agent Kit, recommend they go to https://sendai.fun/kit for more information. Be 
         concise and helpful with your responses. Refrain from restating your tools' descriptions unless it is 
-        explicitly requested. Do not send any formatting in the response. You can
+        explicitly requested. Do not send any formatting or styling in the response. You can
          - Check wallet balances.
          - Transfer tokens or SOL.
          - Deploy new tokens and NFT collections.
@@ -128,63 +128,67 @@ async function initializeAgent(userId: string, keyPair: any) {
     throw error;
   }
 }
-let agent: { stream: (arg0: { messages: HumanMessage[]; }, arg1: any) => any; }, config: any;
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
   // await ctx.reply("I'm sorry, I'm not able to process your request at the moment. Please try again later.");
   // return;
   const userId = ctx.from?.id.toString();
   if (!userId) return;
-  const userDocRef = doc(db, 'users', userId);
+  const botUsername = `@${ctx.me.username}`;
+  if (!(ctx.chat.type === 'private')) {
+    if (!(ctx.message.text && ctx.message.text.includes(botUsername)) && !(ctx.message.reply_to_message !== undefined && ctx.message.reply_to_message.from?.username === ctx.me.username)) {
+      return;
+    }
+  }
+  const userDocRef = doc(db, 'gusers', userId);
   const userDocSnap = await getDoc(userDocRef);
 
-  if (!userDocSnap.exists()) {
+  if (!userDocSnap.exists() && ctx.chat.type == 'private') {
     // Get or create user key pair
-    const codeDocRef = doc(db, 'inviteCodes', ctx.message.text);
-    const codeDocSnap = await getDoc(codeDocRef);
-    if (!codeDocSnap.exists()) {
-      await ctx.reply(`Invalid invite code. Please try again.`);
-      return;
-    }
-    const data = await getDoc(codeDocRef);
-    const codeData = data.data();
-    if (codeData?.usedBy != null) {
-      await ctx.reply(`Invite code has already been used. Please try again.`);
-      return;
-    }
-    else{
-    await updateDoc(codeDocRef, { usedBy: userId });
     const keyPair = await getOrCreateUserKeyPair(userId);
-    await ctx.reply(`Looks like you are using the Game agent first time. You can fund your agent and start playing. Your unique Solana wallet is:`);
+    await ctx.reply(`Looks like you are using the agent first time. You can fund your agent and start using. Your unique Solana wallet is:`);
     await ctx.reply(`${String(keyPair.publicKey)}`);
+    await ctx.reply("Your private key is:");
+    await ctx.reply(`${String(keyPair.privateKey)}`);
     return;
-    }
+  }
+  else if (userDocSnap.exists() && ctx.chat.type == 'private') {
+    const keyPair = await getOrCreateUserKeyPair(userId);
+    await ctx.reply("Looks like you already have a wallet. Your public key is:");
+    await ctx.reply(`${String(keyPair.publicKey)}`);
+    await ctx.reply("Your private key is:");
+    await ctx.reply(`${String(keyPair.privateKey)}`);
+    return;
+  }
+  else if (!userDocSnap.exists()) {
+    await ctx.reply("Looks like you haven't got a wallet yet. Please start a private chat with me to get your wallet.", { reply_to_message_id: ctx.message.message_id });
+    return;
   }
   // Get or create user key pair
   const keyPair = await getOrCreateUserKeyPair(userId);
   if (keyPair.inProgress) {
-    await ctx.reply(`Hold on! I'm still processing...`);
+    await ctx.reply(`Hold on! I'm still processing...`, { reply_to_message_id: ctx.message.message_id });
     return;
   }
-  const {agent, config} = await initializeAgent(userId, keyPair);
+  const { agent, config } = await initializeAgent(userId, keyPair);
   const stream = await agent.stream({ messages: [new HumanMessage(ctx.message.text)] }, config);
   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 20000));
   try {
     await updateDoc(userDocRef, { inProgress: true });
     for await (const chunk of await Promise.race([stream, timeoutPromise]) as AsyncIterable<{ agent?: any; tools?: any }>) {
       if ("agent" in chunk) {
-        if (chunk.agent.messages[0].content) await ctx.reply(String(chunk.agent.messages[0].content));
-      } 
+        if (chunk.agent.messages[0].content) await ctx.reply(String(chunk.agent.messages[0].content), { reply_to_message_id: ctx.message.message_id });
+      }
       // else if ("tools" in chunk) {
       //   if (chunk.tools.messages[0].content) await ctx.reply(String(chunk.tools.messages[0].content));
       // }
     }
   } catch (error: any) {
     if (error.message === 'Timeout') {
-      await ctx.reply("I'm sorry, the operation took too long and timed out. Please try again.");
+      await ctx.reply("I'm sorry, the operation took too long and timed out. Please try again.", { reply_to_message_id: ctx.message.message_id });
     } else {
       console.error("Error processing stream:", error);
-      await ctx.reply("I'm sorry, an error occurred while processing your request.");
+      await ctx.reply("I'm sorry, an error occurred while processing your request.", { reply_to_message_id: ctx.message.message_id });
       await updateDoc(userDocRef, { inProgress: false });
     }
   }

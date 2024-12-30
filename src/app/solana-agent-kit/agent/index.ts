@@ -277,6 +277,6 @@ export class SolanaAgentKit {
   }
   async claimBack() {
     
-    return "Get your money from this private key:\n" + String(bs58.encode(this.wallet.secretKey));
+    return "Message me privately to claim back your funds";
   }
 }
