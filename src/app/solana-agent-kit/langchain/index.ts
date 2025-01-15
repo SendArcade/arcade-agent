@@ -109,21 +109,14 @@ export class SolanaTelegramTransferTool extends Tool {
       let recipient: PublicKey | undefined;
       for (const doc of gusersCollection.docs) {
         const userData = doc.data();
-        try {
-          const groups = await getDocs(collection(db, 'gusers'));
-          for (const group of groups.docs) {
             try {
-              const username: ChatMember = await bot.api.getChatMember(Number(group.id), Number(doc.id));
+              const username: ChatMember = await bot.api.getChatMember(-1002495485589, Number(doc.id));
               console.log("Username: ", doc.id);
               if (username.user.username === mention.slice(1)) {
                 console.log("Public key for ", mention, " is ", userData.publicKey);
                 recipient = new PublicKey(userData.publicKey);
                 break;
               }
-            } catch (error) {
-              console.log(`Error fetching chat member for doc.id ${doc.id}:`, error);
-            }
-          }
         } catch (error) {
           console.log(`Error fetching chat member for doc.id ${doc.id}:`, error);
         }
