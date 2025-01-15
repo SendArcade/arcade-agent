@@ -7,6 +7,30 @@ import { fetchPrice } from "../tools/fetch_price";
 import { BN } from "@coral-xyz/anchor";
 import { FEE_TIERS } from "../tools";
 import { toJSON } from "../utils/toJSON";
+import { getApps, initializeApp, getApp } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { Bot, webhookCallback } from 'grammy';
+import { parse } from "path";
+import { ChatMember } from "grammy/types";
+
+// Firebase
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+};
+
+// Initialize Firebase
+const app = !getApps.length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
+
+const token = process.env.TELEGRAM_BOT_TOKEN;
+if (!token) throw new Error('TELEGRAM_BOT_TOKEN environment variable not found.');
+const bot = new Bot(token);
 
 export class SolanaBalanceTool extends Tool {
   name = "solana_balance";
@@ -23,7 +47,7 @@ export class SolanaBalanceTool extends Tool {
       const tokenAddress = input ? new PublicKey(input) : undefined;
       const balance = await this.solanaKit.getBalance(tokenAddress);
 
-      return balance!=undefined ? balance.toString() : "Not found.";
+      return balance != undefined ? balance.toString() : "Not found.";
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -64,6 +88,62 @@ export class SolanaTransferTool extends Tool {
   }
 }
 
+export class SolanaTelegramTransferTool extends Tool {
+  name = "solana_telegram_transfer";
+  description = `Transfer tokens or SOL to a telgram id (Get username of user on telegram).
+
+  Inputs ( input is a JSON string ):
+  to: string, eg "@example" (required)
+  amount: number, eg 1 (required)
+  mint?: string, eg "So11111111111111111111111111111111111111112" or "SENDdRQtYMWaQrBroBrJ2Q53fgVuq95CV9UPGEvpCxa" (optional)`;
+
+  constructor(private solanaKit: SolanaAgentKit) {
+    super();
+  }
+
+  protected async _call(input: string): Promise<string> {
+    try {
+      const parsedInput = JSON.parse(input);
+      const mention = parsedInput.to;
+      const gusersCollection = await getDocs(collection(db, 'gusers'));
+      let recipient: PublicKey | undefined;
+      for (const doc of gusersCollection.docs) {
+        const userData = doc.data();
+        try {
+          const groups = await getDocs(collection(db, 'gusers'));
+          for (const group of groups.docs) {
+            const username: ChatMember = await bot.api.getChatMember(Number(group.id), Number(doc.id));
+            console.log("Username: ", doc.id);
+            if (username.user.username === mention.slice(1)) {
+              console.log("Public key for ", mention, " is ", userData.publicKey);
+              recipient = new PublicKey(userData.publicKey);
+              break;
+            }
+          }
+        } catch (error) {
+          console.log(`Error fetching chat member for doc.id ${doc.id}:`, error);
+        }
+      }
+      if (!recipient) {
+        throw new Error("Recipient not found.");
+      }
+
+      const mintAddress = parsedInput.mint
+        ? new PublicKey(parsedInput.mint)
+        : undefined;
+
+      const tx = await this.solanaKit.transfer(
+        recipient,
+        parsedInput.amount,
+        mintAddress
+      );
+      return "Transfer completed successfully of " + parsedInput.amount + " to " + parsedInput.to + " with public address " + recipient + " with tx " + tx;
+    } catch (error: any) {
+      return "Sorry an error occurred. Please try again later." + String(error);
+    }
+  }
+}
+
 export class SolanaDeployTokenTool extends Tool {
   name = "solana_deploy_token";
   description = `Deploy a new token on Solana blockchain.
@@ -90,7 +170,7 @@ export class SolanaDeployTokenTool extends Tool {
         parsedInput.decimals,
         parsedInput.initialSupply
       );
-      return "Token deployed successfully with mint address " + result.mint+ " and decimals " + (parsedInput.decimals || 9);
+      return "Token deployed successfully with mint address " + result.mint + " and decimals " + (parsedInput.decimals || 9);
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -115,7 +195,7 @@ export class SolanaDeployCollectionTool extends Tool {
       const parsedInput = JSON.parse(input);
 
       const result = await this.solanaKit.deployCollection(parsedInput);
-      return "Collection deployed successfully with mint address " + result.collectionAddress+ " and name " + parsedInput.name;
+      return "Collection deployed successfully with mint address " + result.collectionAddress + " and name " + parsedInput.name;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -150,7 +230,7 @@ export class SolanaMintNFTTool extends Tool {
           ? new PublicKey(parsedInput.recipient)
           : this.solanaKit.wallet_address
       );
-      return "NFT minted successfully with mint address " + result.mint.toString()+ " and name " + parsedInput.name+ " and symbol " + parsedInput.symbol+ " and uri " + parsedInput.uri+ " and recipient " + parsedInput.recipient;
+      return "NFT minted successfully with mint address " + result.mint.toString() + " and name " + parsedInput.name + " and symbol " + parsedInput.symbol + " and uri " + parsedInput.uri + " and recipient " + parsedInput.recipient;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -183,7 +263,7 @@ export class SolanaTradeTool extends Tool {
           : new PublicKey("So11111111111111111111111111111111111111112"),
         parsedInput.slippageBps
       );
-      return "Trade executed successfully with tx " + tx+ " and inputAmount " + parsedInput.inputAmount+ " and inputToken " + parsedInput.inputMint+ " and outputToken " + parsedInput.outputMint;
+      return "Trade executed successfully with tx " + tx + " and inputAmount " + parsedInput.inputAmount + " and inputToken " + parsedInput.inputMint + " and outputToken " + parsedInput.outputMint;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -201,7 +281,7 @@ export class SolanaRequestFundsTool extends Tool {
   protected async _call(_input: string): Promise<string> {
     try {
       await this.solanaKit.requestFaucetFunds();
-      return "Funds requested successfully"+ " and network is " + this.solanaKit.connection.rpcEndpoint.split("/")[2];
+      return "Funds requested successfully" + " and network is " + this.solanaKit.connection.rpcEndpoint.split("/")[2];
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -281,7 +361,7 @@ export class SolanaPumpfunTokenLaunchTool extends Tool {
           initialLiquiditySOL: parsedInput.initialLiquiditySOL,
         }
       );
-      return "Token launched successfully on Pump.fun and tokenName " + parsedInput.tokenName+ " and tokenTicker " + parsedInput.tokenTicker;
+      return "Token launched successfully on Pump.fun and tokenName " + parsedInput.tokenName + " and tokenTicker " + parsedInput.tokenTicker;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -307,7 +387,7 @@ export class SolanaCreateImageTool extends Tool {
     try {
       this.validateInput(input);
       const result = await create_image(this.solanaKit, input.trim());
-      return "Image created successfully with prompt."+ " and result " + result.images[0].toString();
+      return "Image created successfully with prompt." + " and result " + result.images[0].toString();
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -330,7 +410,7 @@ export class SolanaLendAssetTool extends Tool {
       let amount = JSON.parse(input).amount || input;
 
       const tx = await this.solanaKit.lendAssets(amount);
-      return "Asset lent successfully with tx " + tx+ " and amount " + amount;
+      return "Asset lent successfully with tx " + tx + " and amount " + amount;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -371,7 +451,7 @@ export class SolanaStakeTool extends Tool {
       const parsedInput = JSON.parse(input) || Number(input);
 
       const tx = await this.solanaKit.stake(parsedInput.amount);
-      return "Staked successfully with tx " + tx+ " and amount " + parsedInput.amount;
+      return "Staked successfully with tx " + tx + " and amount " + parsedInput.amount;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -395,7 +475,7 @@ export class SolanaFetchPriceTool extends Tool {
   async _call(input: string): Promise<string> {
     try {
       const price = await fetchPrice(this.solanaKit, input.trim());
-      return "Price fetched successfully with price " + price+ " and tokenId " + input.trim();
+      return "Price fetched successfully with price " + price + " and tokenId " + input.trim();
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -418,7 +498,7 @@ export class SolanaTokenDataTool extends Tool {
       const parsedInput = input.trim();
 
       const tokenData = await this.solanaKit.getTokenDataByAddress(parsedInput);
-      return "Token data fetched successfully with tokenData " + tokenData+ " and mintAddress " + parsedInput;
+      return "Token data fetched successfully with tokenData " + tokenData + " and mintAddress " + parsedInput;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -440,7 +520,7 @@ export class SolanaTokenDataByTickerTool extends Tool {
     try {
       const ticker = input.trim();
       const tokenData = await this.solanaKit.getTokenDataByTicker(ticker);
-      return "Token data fetched successfully with tokenData " + tokenData+ " and ticker " + ticker;
+      return "Token data fetched successfully with tokenData " + tokenData + " and ticker " + ticker;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -475,7 +555,7 @@ export class SolanaCompressedAirdropTool extends Tool {
         parsedInput.priorityFeeInLamports || 30_000,
         parsedInput.shouldLog || false
       );
-      return "Airdropped successfully with txs " + txs+ " and mintAddress " + parsedInput.mintAddress+ " and amount " + parsedInput.amount+ " and decimals " + parsedInput.decimals+ " and recipients " + parsedInput.recipients;
+      return "Airdropped successfully with txs " + txs + " and mintAddress " + parsedInput.mintAddress + " and amount " + parsedInput.amount + " and decimals " + parsedInput.decimals + " and recipients " + parsedInput.recipients;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -699,7 +779,7 @@ export class SolanaRockPaperScissorsTool extends Tool {
         Number(parsedInput['"amount"']),
         parsedInput['"choice"'].replace(/^"|"$/g, '') as "rock" | "paper" | "scissors"
       );
-      return "https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg\n"+ await result;
+      return "https://raw.githubusercontent.com/The-x-35/rps-solana-blinks/refs/heads/main/public/1.jpeg\n" + await result;
     } catch (error: any) {
       return "Sorry an error occurred. Please try again later.";
     }
@@ -751,5 +831,6 @@ export function createSolanaTools(solanaKit: SolanaAgentKit) {
     new SolanaCreateSingleSidedWhirlpoolTool(solanaKit),
     new SolanaRockPaperScissorsTool(solanaKit),
     new SolanaClaimBackTool(solanaKit),
+    new SolanaTelegramTransferTool(solanaKit),
   ];
 }

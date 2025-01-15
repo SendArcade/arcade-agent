@@ -11,7 +11,7 @@ import { MemorySaver } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { HumanMessage } from "@langchain/core/messages";
 import { getApps, initializeApp, getApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import { Keypair } from '@solana/web3.js';
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
@@ -130,6 +130,34 @@ async function initializeAgent(userId: string, keyPair: any) {
 }
 // Telegram bot handler
 bot.on('message:text', async (ctx) => {
+//  await ctx.reply (ctx.chat.id.toString());
+//  return;
+  // ctx.message.entities?.forEach(async (entity) => {
+  //   if (entity.type === 'mention') {
+  //     await ctx.reply("here");
+  //      // Extract the username from the message text
+  //      await ctx.reply(`Entity: ${entity.offset}, ${entity.length}`);
+  //      const mention = ctx.message.text.toString().substring(entity.offset, entity.offset + entity.length);
+  //      await ctx.reply(`Mention: ${mention}`);
+  //      const chatMember = await ctx.getChatMember(1004608510);
+  //      if (chatMember.user.username) {
+  //        await ctx.reply(chatMember.user.username);
+  //      } else {
+  //        await ctx.reply("Username not found.");
+  //      }
+  //     const gusersCollection = await getDocs(collection(db, 'gusers'));
+  //     gusersCollection.docs.forEach(async (doc) => {
+  //     // await ctx.reply(`Doc: ${doc.id}`);
+  //     const userData = doc.data();
+  //     const username = await bot.api.getChatMember(-1002415178601,Number(doc.id));
+  //     // await ctx.reply(`Username: ${username.user.username}`);
+  //     // await ctx.reply(`Mention: ${mention.slice(1)}`);
+  //     if (username.user.username === mention.slice(1)) {
+  //       await ctx.reply(`Public key for ${mention}: ${userData.publicKey}`);
+  //     }
+  //   });
+  //   }
+  // });
   // await ctx.reply("I'm sorry, I'm not able to process your request at the moment. Please try again later.");
   // return;
   const userId = ctx.from?.id.toString();

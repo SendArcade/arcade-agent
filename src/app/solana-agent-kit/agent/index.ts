@@ -276,7 +276,6 @@ export class SolanaAgentKit {
     return rps(this, amount, choice);
   }
   async claimBack() {
-    
     return "Message me privately to claim back your funds";
   }
 }
