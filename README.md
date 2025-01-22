@@ -1,4 +1,4 @@
-# Solana Agent Kit Telegram Group Bot
+# Arcade Agent - Groups
 
 A powerful Telegram bot built with Next.js, created by Send Arcade and inspired by Solana Agent Kit by Send AI. This is the group bot version that's specifically designed to run in Telegram groups and perform various Solana blockchain operations. For the private bot version, please check the private-bot branch.
 
