@@ -1,6 +1,5 @@
-# Solana Agent Kit Telegram Private Bot
-
-A powerful Telegram bot built with Next.js, created by Send Arcade and inspired by Solana Agent Kit by Send AI. This is the private bot version that's specifically designed for one-on-one interactions with users, providing a secure and personalized experience for managing Solana blockchain operations.
+# Arcade Agent - DM 
+A Telegram bot built with Next.js, created by Send Arcade and inspired by Solana Agent Kit by Send AI. This is the private bot version that's specifically designed for one-on-one interactions with users, providing a secure and personalized experience for managing Solana blockchain operations.
 
 ## Features
 
